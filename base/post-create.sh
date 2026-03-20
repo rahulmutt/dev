@@ -26,7 +26,5 @@ if [ "${INSTALL_NGROK:-}" = "true" ]; then
   rm -rf /var/lib/apt/lists/*
 fi
 
-eval "$(mise activate bash)" 
-
 pi install npm:@rahulmutt/pi-ralph || true
 pi install npm:pi-web-access || true
