@@ -17,14 +17,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tmux \
     xz-utils \
     zip \
- && rm -rf /var/lib/apt/lists/*
- && curl -fsSL https://mise.run | sh
- && mkdir -p /root/.cache /root/.local /workspace
- && echo 'eval "$(/usr/local/bin/mise activate bash)"' >> /root/.bashrc
- && echo 'alias vim=nvim' >> /root/.bashrc
+ && rm -rf /var/lib/apt/lists/* \
+ && curl -fsSL https://mise.run | sh \
+ && mkdir -p /root/.cache /root/.local /workspace \
+ && echo 'eval "$(/usr/local/bin/mise activate bash)"' >> /root/.bashrc \
+ && echo 'alias vim=nvim' >> /root/.bashrc \
  && curl -o /tmp/xterm-kitty.terminfo https://raw.githubusercontent.com/kovidgoyal/kitty/master/terminfo/kitty.terminfo \
  && tic -x /tmp/xterm-kitty.terminfo \
- && rm /tmp/xterm-kitty.terminfo \
+ && rm /tmp/xterm-kitty.terminfo
 
 COPY ./tmux-dev /usr/local/bin/tmux-dev
 COPY ./post-create.sh /usr/local/bin/post-create.sh
