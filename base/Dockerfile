@@ -2,6 +2,7 @@ FROM debian:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MISE_INSTALL_PATH=/usr/local/bin/mise
+ENV PATH="/root/.local/share/mise/shims:/root/.local/share/mise/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
@@ -28,8 +29,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && tic -x /tmp/xterm-kitty.terminfo \
  && rm /tmp/xterm-kitty.terminfo
 
+COPY ./mise.toml /root/.config/mise/config.toml
 COPY ./tmux-dev /usr/local/bin/tmux-dev
 COPY ./post-create.sh /usr/local/bin/post-create.sh
+
 RUN chmod +x /usr/local/bin/tmux-dev \
  && chmod +x /usr/local/bin/post-create.sh 
 
