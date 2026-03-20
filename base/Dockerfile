@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xz-utils \
     zip \
  && rm -rf /var/lib/apt/lists/* \
- && install -d -m 0755 /etc/apt/keyrings
+ && install -d -m 0755 /etc/apt/keyrings \
  && curl -fsSL https://mise.run | sh \
  && mkdir -p /root/.cache /root/.local /workspace \
  && echo 'eval "$(/usr/local/bin/mise activate bash)"' >> /root/.bashrc \
