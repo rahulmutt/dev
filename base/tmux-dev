@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SESSION="${1:-dev}"
+ROOT="${2:-/workspace}"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  exec tmux attach -t "$SESSION"
+fi
+
+tmux new-session -d -s "$SESSION" -n agent -c "$ROOT" 'bash -lc "pi; exec bash"'
+tmux split-window -h -t "$SESSION" -c "$ROOT" 'bash -lc "nvim; exec bash"'
+tmux select-layout -t "$SESSION" even-horizontal
+exec tmux attach -t "$SESSION"
