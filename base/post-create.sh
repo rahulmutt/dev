@@ -6,6 +6,8 @@ if [ -f mise.toml ]; then
   mise install 
 fi
 
+nvim --headless "+Lazy! sync" +qa || true
+
 # Only install if explicitly enabled
 if [ "${INSTALL_NGROK:-}" = "true" ]; then
   curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
