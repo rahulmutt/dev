@@ -31,11 +31,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo 'alias vim=nvim' >> /root/.bashrc \
  && curl -o /tmp/xterm-kitty.terminfo https://raw.githubusercontent.com/kovidgoyal/kitty/master/terminfo/kitty.terminfo \
  && tic -x /tmp/xterm-kitty.terminfo \
- && rm /tmp/xterm-kitty.terminfo
+ && rm /tmp/xterm-kitty.terminfo \
+ && git clone https://github.com/tmux-plugins/tpm /root/.tmux/plugins/tpm \
+ && git clone https://github.com/LazyVim/starter /root/.config/nvim
+
 
 COPY ./mise.toml /root/.config/mise/config.toml
 COPY ./tmux-dev /usr/local/bin/tmux-dev
 COPY ./post-create.sh /usr/local/bin/post-create.sh
+COPY ./tmux.conf /root/.tmux.conf
 
 RUN chmod +x /usr/local/bin/tmux-dev \
  && chmod +x /usr/local/bin/post-create.sh 
