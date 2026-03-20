@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     unzip \
     tmux \
-    gpg \
+    gnupg \
     xz-utils \
     zip \
  && rm -rf /var/lib/apt/lists/* \
