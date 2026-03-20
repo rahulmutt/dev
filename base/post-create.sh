@@ -6,10 +6,6 @@ if [ -f mise.toml ]; then
   mise install 
 fi
 
-if [ ! -d ~/.config/nvim ]; then 
-  git clone https://github.com/LazyVim/starter ~/.config/nvim
-fi
-
 # Only install if explicitly enabled
 if [ "${INSTALL_NGROK:-}" = "true" ]; then
   curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
