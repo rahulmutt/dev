@@ -3,8 +3,9 @@ set -euo pipefail
 
 if [ -f mise.toml ]; then 
   mise trust --yes mise.toml || true
-  mise install 
 fi
+
+mise install
 
 # Install tmux plugins
 ~/.tmux/plugins/tpm/bin/install_plugins
