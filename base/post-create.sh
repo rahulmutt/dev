@@ -6,6 +6,10 @@ if [ -f mise.toml ]; then
   mise install 
 fi
 
+# Install tmux plugins
+~/.tmux/plugins/tpm/bin/install_plugins
+
+# Install nvim plugins
 nvim --headless "+Lazy! sync" +qa || true
 
 # Only install if explicitly enabled
