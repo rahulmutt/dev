@@ -38,8 +38,7 @@ COPY ./post-create.sh /usr/local/bin/post-create.sh
 COPY ./tmux.conf /root/.tmux.conf
 
 RUN chmod +x /usr/local/bin/tmux-dev \
- && chmod +x /usr/local/bin/post-create.sh \
- && /root/.tmux/plugins/tpm/bin/install_plugins
+ && chmod +x /usr/local/bin/post-create.sh
 
 WORKDIR /workspace
 
