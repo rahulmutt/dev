@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && git clone https://github.com/LazyVim/starter /root/.config/nvim \
  && rm -rf /root/.config/nvim/.git
 
-COPY ./config/mise/config.toml /root/.config/mise/config.toml
+COPY ./.config/mise/config.toml /root/.config/mise/config.toml
 COPY ./base/tmux-dev /usr/local/bin/tmux-dev
 COPY ./base/post-create.sh /usr/local/bin/post-create.sh
 COPY ./.tmux.conf /root/.tmux.conf
