@@ -1,21 +1,17 @@
 on_http_request:
-  # Step 1: Require Google login
+  # Require Google login
   - actions:
       - type: oauth
         config:
           provider: google
 
-  # Step 2: Allow only specific emails
+  # Deny anyone not in the allowlist
   - expressions:
-      - |
-        actions.ngrok.oauth.identity.email in [
+      - >
+        !(actions.ngrok.oauth.identity.email in [
           "rahulmutt@gmail.com",
           "rahulmutti64@gmail.com",
           "jyothsnasrinivas17@gmail.com"
-        ]
+        ])
     actions:
-      - type: forward
-
-  # Step 3: Deny everyone else
-  - actions:
       - type: deny
