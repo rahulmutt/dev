@@ -1,0 +1,5 @@
+term = "xterm-ghostty"
+shell-integration = "detect"
+shell-integration-features = "cursor,sudo,ssh-terminfo,ssh-env"
+clipboard-write = "allow"
+copy-on-select = "clipboard"
