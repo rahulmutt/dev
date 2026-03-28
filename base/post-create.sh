@@ -30,7 +30,7 @@ if [ "${INSTALL_NGROK:-}" = "true" ]; then
 fi
 
 if [ "${INSTALL_DEVENV:-}" = "true" ]; then
-  . /root/.nix-profile/etc/profile.d/nix.sh
+  . ~/.nix-profile/etc/profile.d/nix.sh
   nix profile install nixpkgs#devenv
 fi
 
