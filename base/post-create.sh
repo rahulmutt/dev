@@ -44,12 +44,8 @@ fi
 # --- install nix (single-user) ---
 if [ "${INSTALL_NIX:-}" = "true" ]; then
   if [ ! -e "${HOME}/.nix-profile/etc/profile.d/nix.sh" ]; then
-    # ensure /nix exists + owned correctly
-    if [ ! -d /nix ]; then
-      sudo mkdir -p /nix
-    fi
-
-    sudo chown "$(id -u):$(id -g)" /nix
+    sudo mkdir -p /nix
+    sudo chown -R "$(id -u):$(id -g)" /nix
     sudo chmod 0755 /nix
 
     mkdir -p "${HOME}/.config/nix"
