@@ -42,11 +42,6 @@ RUN curl -fsSL https://nixos.org/nix/install | bash -s -- --no-daemon \
  && . /root/.nix-profile/etc/profile.d/nix.sh \
  && nix --version
 
-# --- install devenv ---
-RUN . /root/.nix-profile/etc/profile.d/nix.sh \
- && nix profile install nixpkgs#devenv \
- && devenv version
-
 # --- shell setup ---
 RUN mkdir -p /root/.cache /root/.local /workspace \
  && echo 'eval "$(/usr/local/bin/mise activate bash)"' >> /root/.bashrc \
