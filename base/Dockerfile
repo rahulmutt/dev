@@ -7,10 +7,6 @@ ENV MISE_INSTALL_PATH=/usr/local/bin/mise
 ENV PATH="/root/.local/share/mise/shims:/root/.local/share/mise/bin:/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 ENV MISE_DATA_DIR="/root/.local/share/mise"
 ENV MISE_CACHE_DIR="/root/.cache/mise"
-
-# nix
-ENV NIX_CONFIG="experimental-features = nix-command flakes"
-
 ENV EDITOR="nvim"
 ENV SHELL="/bin/bash"
 
