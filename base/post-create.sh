@@ -29,5 +29,10 @@ if [ "${INSTALL_NGROK:-}" = "true" ]; then
   rm -rf /var/lib/apt/lists/*
 fi
 
+if [ "${INSTALL_DEVENV:-}" = "true" ]; then
+  . /root/.nix-profile/etc/profile.d/nix.sh
+  nix profile install nixpkgs#devenv
+fi
+
 pi install npm:@rahulmutt/pi-ralph || true
 pi install npm:pi-web-access || true
