@@ -29,23 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # --- install mise ---
 RUN curl -fsSL https://mise.run | sh
 
-# --- copy nix config first ---
-COPY ./.config/nix/nix.conf /etc/nix/nix.conf
-
-# --- prepare nix dirs ---
-RUN mkdir -p /nix \
- && chmod 0755 /nix \
- && mkdir -p /etc/nix
-
-# --- install nix (single-user, root, no-daemon) ---
-RUN curl -fsSL https://nixos.org/nix/install | bash -s -- --no-daemon \
- && . /root/.nix-profile/etc/profile.d/nix.sh \
- && nix --version
-
 # --- shell setup ---
 RUN mkdir -p /root/.cache /root/.local /workspace \
  && echo 'eval "$(/usr/local/bin/mise activate bash)"' >> /root/.bashrc \
- && echo '. /root/.nix-profile/etc/profile.d/nix.sh' >> /root/.bashrc \
  && echo 'alias vim=nvim' >> /root/.bashrc
 
 # --- dev tooling ---
@@ -53,6 +39,7 @@ RUN git clone https://github.com/tmux-plugins/tpm /root/.tmux/plugins/tpm \
  && git clone https://github.com/LazyVim/starter /root/.config/nvim \
  && rm -rf /root/.config/nvim/.git
 
+COPY ./.config/nix/nix.conf /etc/nix/nix.conf
 COPY ./.config/nvim/lua/plugins/tmux.lua /root/.config/nvim/lua/plugins/tmux.lua
 COPY ./.config/mise/config.toml /root/.config/mise/config.toml
 COPY ./base/tmux-dev /usr/local/bin/tmux-dev
