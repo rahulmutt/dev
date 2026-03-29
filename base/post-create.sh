@@ -50,7 +50,19 @@ if [ "${INSTALL_NIX:-}" = "true" ]; then
 
     mkdir -p "${HOME}/.config/nix"
 
-    curl -fsSL https://nixos.org/nix/install | sh -s -- --no-daemon
+    export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+
+    # If an old shared profile was previously managed by `nix profile`,
+    # the installer's use of `nix-env` will fail.
+    if [ -e "$XDG_STATE_HOME/nix/profiles/profile" ]; then
+      rm -rf "$XDG_STATE_HOME/nix/profiles/profile"*
+    fi
+    
+    rm -f "$HOME/.nix-profile" "$HOME/.nix-defexpr" "$HOME/.nix-channels"
+    
+    if ! command -v nix >/dev/null 2>&1; then
+      sh <(curl -L https://nixos.org/nix/install) --no-daemon --no-channel-add
+    fi
   fi
 
   # shellcheck disable=SC1090
