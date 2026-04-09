@@ -6,6 +6,8 @@
   "mounts": [
     "source=devpod-home-cache,target=/root/.cache,type=volume",
     "source=devpod-home-local,target=/root/.local,type=volume",
+    "source=devpod-bun,target=/home/dev/.bun,type=volume",
+    "source=devpod-npm,target=/home/dev/.npm,type=volume"
   ],
   "postCreateCommand": "post-create.sh",
   "customizations": {
