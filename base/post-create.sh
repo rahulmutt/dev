@@ -6,8 +6,12 @@ if [ -f mise.toml ]; then
   mise trust --yes mise.toml || true
 fi
 
+if [ -f .config/mise/config.toml ]; then 
+  mise trust --yes .config/mise/config.toml || true
+fi
+
 # --- install mise-managed tools ---
-mise install || true
+mise install
 
 # --- install tmux plugins ---
 if [ -x "${HOME}/.tmux/plugins/tpm/bin/install_plugins" ]; then
