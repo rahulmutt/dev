@@ -2,7 +2,7 @@
   "name": "dev",
   "image": "ghcr.io/rahulmutt/dev:sha-3274482",
   "workspaceFolder": "/workspace",
-  "remoteUser": "root",
+  "remoteUser": "dev",
   "mounts": [
     "source=devpod-home-cache,target=/root/.cache,type=volume",
     "source=devpod-home-local,target=/root/.local,type=volume",
