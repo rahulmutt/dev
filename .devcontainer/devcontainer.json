@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "image": "ghcr.io/rahulmutt/dev:sha-9c5fb0f",
+  "image": "ghcr.io/rahulmutt/dev:sha-3274482",
   "workspaceFolder": "/workspace",
   "remoteUser": "root",
   "mounts": [
