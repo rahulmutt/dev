@@ -7,7 +7,7 @@ if [ -f mise.toml ]; then
 fi
 
 # --- install mise-managed tools ---
-mise install
+mise install || true
 
 # --- install tmux plugins ---
 if [ -x "${HOME}/.tmux/plugins/tpm/bin/install_plugins" ]; then
