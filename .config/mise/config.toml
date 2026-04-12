@@ -16,3 +16,5 @@ tmux = "3.6a"
 tree-sitter = "0.26.8"
 gh = "2.89.0"
 "npm:@mariozechner/pi-coding-agent" = "0.66.1"
+"github:rahulmutt/vsync" = "0.2.0"
+
