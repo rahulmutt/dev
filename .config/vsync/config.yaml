@@ -1,0 +1,17 @@
+env:
+  commands:
+    - name: pi
+      variables:
+        - name: GEMINI_API_KEY
+          key: gemini-api-key
+        - name: PERPLEXITY_API_KEY
+          key: perplexity-api-key
+    - name: gh
+      variables:
+        - name: GH_TOKEN
+          key: gh-token
+files:
+  - path: ~/.pi/agent/auth.json
+    key: pi-agent-auth
+  - path: ~/.pi/agent/models.json
+    key: pi-agent-models
