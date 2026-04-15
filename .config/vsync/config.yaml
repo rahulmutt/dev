@@ -1,17 +1,23 @@
+vault:
+  profiles:
+    dev:
+      env_prefix: "secret/data/dev/env"
+      files_prefix: "secret/data/dev/files"
+
+defaults:
+  profile: dev
+
 env:
   commands:
     - name: pi
       variables:
         - name: GEMINI_API_KEY
-          key: gemini-api-key
         - name: PERPLEXITY_API_KEY
-          key: perplexity-api-key
     - name: gh
       variables:
         - name: GH_TOKEN
-          key: gh-token
 files:
   - path: ~/.pi/agent/auth.json
-    key: pi-agent-auth
+    key: pi_agent_auth
   - path: ~/.pi/agent/models.json
-    key: pi-agent-models
+    key: pi_agent_models
