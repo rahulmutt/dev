@@ -16,6 +16,9 @@ env:
     - name: gh
       variables:
         - name: GH_TOKEN
+    - name: ngrok
+      variables:
+        - name: NGROK_AUTHTOKEN
 files:
   - path: ~/.pi/agent/auth.json
     key: pi_agent_auth
