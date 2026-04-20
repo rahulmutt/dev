@@ -13,6 +13,7 @@ env:
       variables:
         - name: GEMINI_API_KEY
         - name: PERPLEXITY_API_KEY
+        - name: OPENROUTER_API_KEY
     - name: gh
       variables:
         - name: GH_TOKEN
