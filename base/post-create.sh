@@ -88,4 +88,5 @@ fi
 if command -v pi >/dev/null 2>&1; then
   pi install npm:@rahulmutt/pi-ralph || true
   pi install npm:pi-web-access || true
+  pi install npm:pi-subagents || true
 fi
