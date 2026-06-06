@@ -76,7 +76,7 @@ RUN git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm" \
 COPY --chown=${USERNAME}:${USERNAME} ./.config/nvim/lua/plugins/tmux.lua /home/${USERNAME}/.config/nvim/lua/plugins/tmux.lua
 COPY --chown=${USERNAME}:${USERNAME} ./.config/mise/config.toml /home/${USERNAME}/.config/mise/config.toml
 COPY --chown=${USERNAME}:${USERNAME} ./.config/vsync/config.yaml /home/${USERNAME}/.config/vsync/config.yaml
-COPY --chown=${USERNAME}:${USERNAME} ./.config/nono/profiles/settings.json /home/${USERNAME}/.config/nono/profiles/settings.json
+COPY --chown=${USERNAME}:${USERNAME} ./.config/nono/profiles/dev.json /home/${USERNAME}/.config/nono/profiles/dev.json
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 COPY --chown=${USERNAME}:${USERNAME} ./.claude/settings.json /home/${USERNAME}/.claude/settings.json
 
