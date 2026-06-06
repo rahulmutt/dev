@@ -50,10 +50,9 @@ RUN curl -fsSL https://mise.run | sh
 
 # ---- copy root-owned system files ----
 COPY ./.config/nix/nix.conf /etc/nix/nix.conf
-COPY ./base/tmux-dev /usr/local/bin/tmux-dev
 COPY ./base/post-create.sh /usr/local/bin/post-create.sh
 
-RUN chmod +x /usr/local/bin/tmux-dev /usr/local/bin/post-create.sh
+RUN chmod +x /usr/local/bin/post-create.sh
 
 # ---- switch to user for user-level setup ----
 USER ${USERNAME}
