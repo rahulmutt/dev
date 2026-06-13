@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     chromium \
     fonts-liberation \
-    fonts-noto-color-emoji 
+    fonts-noto-color-emoji \
  && rm -rf /var/lib/apt/lists/*
 
 # ---- create non-root user with passwordless sudo ----
