@@ -11,6 +11,10 @@ ARG GID=1000
 ENV EDITOR="nvim"
 ENV SHELL="/bin/bash"
 ENV DEBIAN_CODENAME="trixie"
+ENV PUPPETEER_SKIP_DOWNLOAD=1
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV CHROME_BIN=/usr/bin/chromium 
+ENV CHROME_PATH=/usr/bin/chromium
 
 # ---- install system deps ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -28,6 +32,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xz-utils \
     zip \
     sudo \
+    chromium \
+    fonts-liberation \
+    fonts-noto-color-emoji 
  && rm -rf /var/lib/apt/lists/*
 
 # ---- create non-root user with passwordless sudo ----
