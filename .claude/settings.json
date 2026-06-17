@@ -15,5 +15,10 @@
     "chrome-devtools-mcp@claude-plugins-official": true
   },
   "skipDangerousModePermissionPrompt": true,
-  "theme": "dark"
+  "theme": "dark",
+  "showTurnDuration": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  }
 }
