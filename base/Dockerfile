@@ -86,6 +86,7 @@ COPY --chown=${USERNAME}:${USERNAME} ./.config/vsync/config.yaml /home/${USERNAM
 COPY --chown=${USERNAME}:${USERNAME} ./.config/nono/profiles/dev.json /home/${USERNAME}/.config/nono/profiles/dev.json
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 COPY --chown=${USERNAME}:${USERNAME} ./.claude/settings.json /home/${USERNAME}/.claude/settings.json
+COPY --chown=${USERNAME}:${USERNAME} ./.claude/statusline-command.sh /home/${USERNAME}/.claude/statusline-command.sh
 
 WORKDIR /workspace
 
