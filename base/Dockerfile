@@ -80,13 +80,9 @@ RUN git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm" \
  && rm -rf "${HOME}/.config/nvim/.git"
 
 # ---- copy user configs ----
-COPY --chown=${USERNAME}:${USERNAME} ./.config/nvim/lua/plugins/tmux.lua /home/${USERNAME}/.config/nvim/lua/plugins/tmux.lua
-COPY --chown=${USERNAME}:${USERNAME} ./.config/mise/config.toml /home/${USERNAME}/.config/mise/config.toml
-COPY --chown=${USERNAME}:${USERNAME} ./.config/vsync/config.yaml /home/${USERNAME}/.config/vsync/config.yaml
-COPY --chown=${USERNAME}:${USERNAME} ./.config/nono/profiles/dev.json /home/${USERNAME}/.config/nono/profiles/dev.json
+COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
+COPY --chown=${USERNAME}:${USERNAME} ./.claude/ /home/${USERNAME}/.claude/
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
-COPY --chown=${USERNAME}:${USERNAME} ./.claude/settings.json /home/${USERNAME}/.claude/settings.json
-COPY --chown=${USERNAME}:${USERNAME} ./.claude/statusline-command.sh /home/${USERNAME}/.claude/statusline-command.sh
 
 WORKDIR /workspace
 
