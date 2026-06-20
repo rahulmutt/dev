@@ -16,7 +16,6 @@ tmux = "3.6a"
 tree-sitter = "0.26.9"
 gh = "2.95.0"
 
-
 codex = "0.141.0"
 claude = "2.1.183"
 "npm:@earendil-works/pi-coding-agent" = "0.79.8"
@@ -24,4 +23,3 @@ claude = "2.1.183"
 "npm:skills" = "1.5.12"
 "github:rahulmutt/vsync" = "0.6.1"
 "github:always-further/nono" = "0.64.0"
-
