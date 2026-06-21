@@ -8,6 +8,9 @@ ARG UID=1000
 ARG GID=1000
 
 # ---- base env ----
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 ENV EDITOR="nvim"
 ENV SHELL="/bin/bash"
 ENV DEBIAN_CODENAME="trixie"
@@ -18,6 +21,7 @@ ENV CHROME_PATH=/usr/bin/chromium
 
 # ---- install system deps ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    locales \
     bash \
     ca-certificates \
     curl \
@@ -35,6 +39,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-liberation \
     fonts-noto-color-emoji \
+ && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+ && locale-gen \
  && rm -rf /var/lib/apt/lists/*
 
 # ---- create non-root user with passwordless sudo ----
