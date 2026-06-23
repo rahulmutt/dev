@@ -1,0 +1,24 @@
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+model_verbosity = "low"
+service_tier = "standard"
+
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+
+web_search = "cached"
+personality = "pragmatic"
+
+[sandbox_workspace_write]
+network_access = true
+
+[features]
+unified_exec = true
+
+[marketplaces.superpowers-dev]
+last_updated = "2026-06-23T15:11:55Z"
+source_type = "git"
+source = "https://github.com/obra/superpowers.git"
+
+[plugins."superpowers@superpowers-dev"]
+enabled = true
