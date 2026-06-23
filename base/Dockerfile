@@ -86,8 +86,9 @@ RUN git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm" \
  && rm -rf "${HOME}/.config/nvim/.git"
 
 # ---- copy user configs ----
-COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} ./.claude/ /home/${USERNAME}/.claude/
+COPY --chown=${USERNAME}:${USERNAME} ./.codex/ /home/${USERNAME}/.codex/
+COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 
 WORKDIR /workspace
