@@ -20,7 +20,7 @@ claude = "2.1.187"
 glow = "2.1.2"
 dprint = "0.54.0"
 
-"npm:@earendil-works/pi-coding-agent" = "0.80.1"
+"npm:@earendil-works/pi-coding-agent" = "0.80.2"
 "npm:codeburn" = "0.9.14"
 "npm:skills" = "1.5.13"
 "github:rahulmutt/vsync" = "0.6.1"
