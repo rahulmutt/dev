@@ -16,7 +16,7 @@ tmux = "3.6a"
 tree-sitter = "0.26.9"
 gh = "2.95.0"
 codex = "0.142.0"
-claude = "2.1.187"
+claude = "2.1.190"
 glow = "2.1.2"
 dprint = "0.54.0"
 
