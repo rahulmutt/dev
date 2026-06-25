@@ -19,6 +19,8 @@ codex = "0.142.2"
 claude = "2.1.191"
 glow = "2.1.2"
 dprint = "0.54.0"
+btop = "1.4.7"
+bat = "0.26.1"
 
 "npm:@earendil-works/pi-coding-agent" = "0.80.2"
 "npm:codeburn" = "0.9.14"
