@@ -1,14 +1,8 @@
 {
   "name": "dev",
-  "image": "ghcr.io/rahulmutt/dev:sha-61af191",
+  "image": "ghcr.io/rahulmutt/dev:sha-c6a8c12",
   "workspaceFolder": "/workspace",
   "remoteUser": "dev",
-  "mounts": [
-    "source=devpod-home-cache,target=/root/.cache,type=volume",
-    "source=devpod-home-local,target=/root/.local,type=volume",
-    "source=devpod-bun,target=/home/dev/.bun,type=volume",
-    "source=devpod-npm,target=/home/dev/.npm,type=volume"
-  ],
   "postCreateCommand": "post-create.sh",
   "customizations": {
     "devpod": {
