@@ -1,0 +1,7 @@
+{
+  "packages": [
+    "npm:@rahulmutt/pi-ralph",
+    "npm:pi-web-access",
+    "npm:pi-subagents"
+  ]
+}

@@ -85,8 +85,6 @@ if [ "${INSTALL_DEVENV:-}" = "true" ]; then
 fi
 
 # --- pi tooling ---
-if command -v pi >/dev/null 2>&1; then
-  pi install npm:@rahulmutt/pi-ralph || true
-  pi install npm:pi-web-access || true
-  pi install npm:pi-subagents || true
-fi
+# Plugins are declared in ~/.pi/agent/settings.json (baked in from .pi/ in the
+# repo). pi installs any missing ones automatically on first startup, so there's
+# nothing to do here.

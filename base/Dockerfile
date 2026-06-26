@@ -90,6 +90,7 @@ RUN git clone https://github.com/tmux-plugins/tpm "${HOME}/.tmux/plugins/tpm" \
 COPY --chown=${USERNAME}:${USERNAME} ./.claude/ /home/${USERNAME}/.claude/
 COPY --chown=${USERNAME}:${USERNAME} ./.codex/ /home/${USERNAME}/.codex/
 COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
+COPY --chown=${USERNAME}:${USERNAME} ./.pi/ /home/${USERNAME}/.pi/
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 
 WORKDIR /workspace

@@ -1,0 +1,3 @@
+# pi: track the declarative settings only; ignore credentials and installed packages
+/.pi/agent/auth.json
+/.pi/agent/npm/
