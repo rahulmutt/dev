@@ -13,12 +13,16 @@
 # (e.g. .pi/agent/auth.json, installed packages) is never touched.
 #
 # Usage:
-#   scripts/sync-dotfiles.sh [--dry-run] [--home DIR] [--yes]
+#   scripts/sync-dotfiles.sh [--dry-run] [--verbose] [--home DIR] [--yes]
 #
 #   --dry-run     Show what would change; modify nothing.
+#   --verbose, -v Show a diff of every changed/new file and list unchanged ones.
 #   --home DIR    Target directory to sync into (default: $HOME).
 #   --yes, -y     Don't prompt for confirmation before applying changes.
 #   --help, -h    Show this help.
+#
+# Tip: combine --dry-run --verbose to preview the exact diffs without touching
+# anything.
 
 set -euo pipefail
 
@@ -34,6 +38,7 @@ DOTFILE_ROOTS=(.claude .codex .config .pi .tmux.conf)
 # --- args -------------------------------------------------------------------
 DRY_RUN=0
 ASSUME_YES=0
+VERBOSE=0
 HOME_DIR="$HOME"
 
 usage() { sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]}" | sed 's/^#\{0,1\} \{0,1\}//; $d'; }
@@ -41,6 +46,7 @@ usage() { sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]}" | sed 's/^#\{0,1\} \{0,1\}
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry-run) DRY_RUN=1 ;;
+        -v|--verbose) VERBOSE=1 ;;
         --home) HOME_DIR="${2:?--home needs a directory}"; shift ;;
         --home=*) HOME_DIR="${1#*=}" ;;
         -y|--yes) ASSUME_YES=1 ;;
@@ -65,6 +71,17 @@ fi
 
 hash_of() { sha256sum "$1" 2>/dev/null | cut -d' ' -f1; }
 
+# Print an indented unified diff from the current target ($1) to the repo
+# version ($2). Uses `git diff --no-index` for colorized output that also
+# handles binary files gracefully ("Binary files differ"). Pass /dev/null as
+# $1 to show a new file as all-additions.
+show_diff() {
+    local old="$1" new="$2" color="--color=never"
+    [ -n "$C_RESET" ] && color="--color=always"
+    git --no-pager diff --no-index "$color" -- "$old" "$new" 2>/dev/null \
+        | sed 's/^/    /' || true
+}
+
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 # Backups are written next to each original as <file>.bak.<timestamp>.
 BACKUP_SUFFIX=".bak.$TIMESTAMP"
@@ -85,8 +102,7 @@ if [ "${#FILES[@]}" -eq 0 ]; then
 fi
 
 # --- first pass: figure out what would change -------------------------------
-declare -a TO_NEW=() TO_UPDATE=()
-SAME=0
+declare -a TO_NEW=() TO_UPDATE=() TO_SAME=()
 for rel in "${FILES[@]}"; do
     src="$REPO_ROOT/$rel"
     dst="$HOME_DIR/$rel"
@@ -96,15 +112,28 @@ for rel in "${FILES[@]}"; do
     elif [ "$(hash_of "$src")" != "$(hash_of "$dst")" ]; then
         TO_UPDATE+=("$rel")
     else
-        SAME=$((SAME + 1))
+        TO_SAME+=("$rel")
     fi
 done
 
-for rel in "${TO_NEW[@]:-}";    do [ -n "$rel" ] && echo "  ${C_GREEN}new${C_RESET}     $rel"; done
-for rel in "${TO_UPDATE[@]:-}"; do [ -n "$rel" ] && echo "  ${C_YELLOW}changed${C_RESET} $rel"; done
+for rel in "${TO_NEW[@]:-}"; do
+    [ -n "$rel" ] || continue
+    echo "  ${C_GREEN}new${C_RESET}     $rel"
+    [ "$VERBOSE" -eq 1 ] && show_diff /dev/null "$REPO_ROOT/$rel"
+done
+for rel in "${TO_UPDATE[@]:-}"; do
+    [ -n "$rel" ] || continue
+    echo "  ${C_YELLOW}changed${C_RESET} $rel"
+    [ "$VERBOSE" -eq 1 ] && show_diff "$HOME_DIR/$rel" "$REPO_ROOT/$rel"
+done
+if [ "$VERBOSE" -eq 1 ]; then
+    for rel in "${TO_SAME[@]:-}"; do
+        [ -n "$rel" ] && echo "  ${C_DIM}ok${C_RESET}      $rel"
+    done
+fi
 
 echo
-echo "${C_DIM}${SAME} file(s) already up to date.${C_RESET}"
+echo "${C_DIM}${#TO_SAME[@]} file(s) already up to date.${C_RESET}"
 printf '%s\n' "${C_BOLD}${#TO_NEW[@]} new, ${#TO_UPDATE[@]} to update, will back up ${#TO_UPDATE[@]} existing file(s).${C_RESET}"
 
 if [ "${#TO_NEW[@]}" -eq 0 ] && [ "${#TO_UPDATE[@]}" -eq 0 ]; then

@@ -100,8 +100,24 @@ If you already have the repo cloned, run the sync script directly:
 ```sh
 scripts/sync-dotfiles.sh            # preview the changes, then confirm
 scripts/sync-dotfiles.sh --dry-run  # preview only, change nothing
+scripts/sync-dotfiles.sh --verbose  # show a diff of every change + unchanged files
 scripts/sync-dotfiles.sh --yes      # apply without the prompt
 scripts/sync-dotfiles.sh --home DIR # sync into a different target directory
+```
+
+By default the sync names each file it will create or update (and counts the
+unchanged ones). Add `--verbose` (`-v`) to also print a unified diff of every
+new/changed file and to list the unchanged files by name. Combine it with
+`--dry-run` to inspect the exact diffs without touching anything:
+
+```sh
+scripts/sync-dotfiles.sh --dry-run --verbose
+```
+
+The one-line installer forwards these flags too, e.g.:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run --verbose
 ```
 
 ## Configuration

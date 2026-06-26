@@ -38,6 +38,9 @@ assert_eq() {
 assert_contains() {
     if printf '%s' "$1" | grep -qF -- "$2"; then ok "$3"; else bad "$3 (missing '$2')"; fi
 }
+assert_not_contains() {
+    if printf '%s' "$1" | grep -qF -- "$2"; then bad "$3 (unexpected '$2')"; else ok "$3"; fi
+}
 # count files matching a glob (literal pattern survives when nothing matches).
 # The unquoted $1 is deliberate: we want the glob to expand into positionals.
 # shellcheck disable=SC2086
@@ -125,6 +128,21 @@ assert_contains "$OUT" "Dry run" "dry-run announces itself"
 assert_contains "$OUT" "changed $RC" "dry-run lists the changed file"
 assert_eq "$(count_glob "$HOME_DIR/$RC.bak.*")" "$BEFORE" "dry-run created no backups"
 assert_contains "$(cat "$HOME_DIR/$RC")" "DRY EDIT" "dry-run left the local file untouched"
+
+# ===========================================================================
+echo
+echo "test: --verbose shows a diff for changed files and lists unchanged ones"
+# $RC in home still differs from the repo (left as 'DRY EDIT' above); config.toml
+# was synced in test 1 and never touched, so it is identical.
+OUT="$(run_sync "$SRC" "$HOME_DIR" --dry-run --verbose)"
+assert_contains "$OUT" "changed $RC" "verbose still lists the changed file"
+assert_contains "$OUT" "-DRY EDIT" "verbose diff shows the removed local line"
+assert_contains "$OUT" "@@" "verbose diff includes a unified-diff hunk header"
+assert_contains "$OUT" "ok      .config/demo/config.toml" "verbose names an unchanged file"
+# the default (non-verbose) run must not print any diff body
+OUT="$(run_sync "$SRC" "$HOME_DIR" --dry-run)"
+assert_not_contains "$OUT" "-DRY EDIT" "non-verbose prints no diff"
+assert_not_contains "$OUT" "ok      .config/demo/config.toml" "non-verbose does not list unchanged files"
 
 # ===========================================================================
 echo
