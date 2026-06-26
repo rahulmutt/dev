@@ -41,5 +41,8 @@
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "showTurnDuration": true,
-  "tui": "fullscreen"
+  "tui": "fullscreen",
+  "worktree": {
+    "baseRef": "head"
+  }
 }
