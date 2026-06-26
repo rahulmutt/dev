@@ -12,17 +12,21 @@
 # Because it enumerates *git-tracked* files, anything ignored by .gitignore
 # (e.g. .pi/agent/auth.json, installed packages) is never touched.
 #
+# By default it prints a diff of every new/changed file before applying, so you
+# can review exactly what will change.
+#
 # Usage:
-#   scripts/sync-dotfiles.sh [--dry-run] [--verbose] [--home DIR] [--yes]
+#   scripts/sync-dotfiles.sh [--dry-run] [--quiet] [--verbose] [--home DIR] [--yes]
 #
 #   --dry-run     Show what would change; modify nothing.
-#   --verbose, -v Show a diff of every changed/new file and list unchanged ones.
+#   --quiet, -q   Suppress the per-file diffs; just list the files.
+#   --verbose, -v Also list the unchanged (already up-to-date) files by name.
 #   --home DIR    Target directory to sync into (default: $HOME).
 #   --yes, -y     Don't prompt for confirmation before applying changes.
 #   --help, -h    Show this help.
 #
-# Tip: combine --dry-run --verbose to preview the exact diffs without touching
-# anything.
+# Tip: combine --dry-run with the default diff output to preview the exact
+# changes without touching anything.
 
 set -euo pipefail
 
@@ -38,6 +42,7 @@ DOTFILE_ROOTS=(.claude .codex .config .pi .tmux.conf)
 # --- args -------------------------------------------------------------------
 DRY_RUN=0
 ASSUME_YES=0
+QUIET=0
 VERBOSE=0
 HOME_DIR="$HOME"
 
@@ -46,6 +51,7 @@ usage() { sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]}" | sed 's/^#\{0,1\} \{0,1\}
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry-run) DRY_RUN=1 ;;
+        -q|--quiet) QUIET=1 ;;
         -v|--verbose) VERBOSE=1 ;;
         --home) HOME_DIR="${2:?--home needs a directory}"; shift ;;
         --home=*) HOME_DIR="${1#*=}" ;;
@@ -131,12 +137,12 @@ done
 for rel in "${TO_NEW[@]:-}"; do
     [ -n "$rel" ] || continue
     echo "  ${C_GREEN}new${C_RESET}     $rel"
-    [ "$VERBOSE" -eq 1 ] && show_diff /dev/null "$REPO_ROOT/$rel"
+    [ "$QUIET" -eq 0 ] && show_diff /dev/null "$REPO_ROOT/$rel"
 done
 for rel in "${TO_UPDATE[@]:-}"; do
     [ -n "$rel" ] || continue
     echo "  ${C_YELLOW}changed${C_RESET} $rel"
-    [ "$VERBOSE" -eq 1 ] && show_diff "$HOME_DIR/$rel" "$REPO_ROOT/$rel"
+    [ "$QUIET" -eq 0 ] && show_diff "$HOME_DIR/$rel" "$REPO_ROOT/$rel"
 done
 if [ "$VERBOSE" -eq 1 ]; then
     for rel in "${TO_SAME[@]:-}"; do

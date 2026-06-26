@@ -131,18 +131,23 @@ assert_contains "$(cat "$HOME_DIR/$RC")" "DRY EDIT" "dry-run left the local file
 
 # ===========================================================================
 echo
-echo "test: --verbose shows a diff for changed files and lists unchanged ones"
+echo "test: diffs are shown by default; --quiet suppresses them"
 # $RC in home still differs from the repo (left as 'DRY EDIT' above); config.toml
 # was synced in test 1 and never touched, so it is identical.
-OUT="$(run_sync "$SRC" "$HOME_DIR" --dry-run --verbose)"
-assert_contains "$OUT" "changed $RC" "verbose still lists the changed file"
-assert_contains "$OUT" "-DRY EDIT" "verbose diff shows the removed local line"
-assert_contains "$OUT" "@@" "verbose diff includes a unified-diff hunk header"
-assert_contains "$OUT" "ok      .config/demo/config.toml" "verbose names an unchanged file"
-# the default (non-verbose) run must not print any diff body
 OUT="$(run_sync "$SRC" "$HOME_DIR" --dry-run)"
-assert_not_contains "$OUT" "-DRY EDIT" "non-verbose prints no diff"
-assert_not_contains "$OUT" "ok      .config/demo/config.toml" "non-verbose does not list unchanged files"
+assert_contains "$OUT" "changed $RC" "default lists the changed file"
+assert_contains "$OUT" "-DRY EDIT" "default shows the removed local line in a diff"
+assert_contains "$OUT" "@@" "default diff includes a unified-diff hunk header"
+OUTQ="$(run_sync "$SRC" "$HOME_DIR" --dry-run --quiet)"
+assert_contains "$OUTQ" "changed $RC" "--quiet still lists the changed file"
+assert_not_contains "$OUTQ" "-DRY EDIT" "--quiet suppresses the diff body"
+
+# ===========================================================================
+echo
+echo "test: --verbose additionally lists unchanged files"
+OUTV="$(run_sync "$SRC" "$HOME_DIR" --dry-run --verbose)"
+assert_contains "$OUTV" "ok      .config/demo/config.toml" "--verbose names an unchanged file"
+assert_not_contains "$OUT" "ok      .config/demo/config.toml" "default does not list unchanged files"
 
 # ===========================================================================
 echo
