@@ -40,5 +40,6 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
-  "showTurnDuration": true
+  "showTurnDuration": true,
+  "tui": "fullscreen"
 }
