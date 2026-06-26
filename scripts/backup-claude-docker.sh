@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fail fast if anything we shell out to is missing, reporting all of them at
+# once rather than blowing up partway through.
+require_cmds() {
+    local missing=() cmd
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+    done
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo "${0##*/}: missing required command(s): ${missing[*]}" >&2
+        exit 1
+    fi
+}
+
+require_cmds mktemp zip date
+
 if command -v podman >/dev/null 2>&1; then
     CONTAINER_CLI=podman
 elif command -v docker >/dev/null 2>&1; then

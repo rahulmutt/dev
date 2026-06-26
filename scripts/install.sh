@@ -21,8 +21,20 @@ set -eu
 REPO_URL="${DOTFILES_REPO:-https://github.com/rahulmutt/dev.git}"
 REPO_BRANCH="${DOTFILES_BRANCH:-main}"
 
-command -v git  >/dev/null 2>&1 || { echo "install.sh: git is required"  >&2; exit 1; }
-command -v bash >/dev/null 2>&1 || { echo "install.sh: bash is required" >&2; exit 1; }
+# Fail fast if anything we shell out to is missing, reporting all of them at
+# once rather than blowing up partway through.
+require_cmds() {
+    missing=''
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || missing="$missing $cmd"
+    done
+    if [ -n "$missing" ]; then
+        echo "install.sh: missing required command(s):$missing" >&2
+        exit 1
+    fi
+}
+
+require_cmds git bash mktemp
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT INT TERM

@@ -56,8 +56,20 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-command -v git >/dev/null 2>&1 || { echo "git is required" >&2; exit 1; }
-command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required" >&2; exit 1; }
+# Fail fast if anything we shell out to is missing, reporting all of them at
+# once rather than blowing up partway through.
+require_cmds() {
+    local missing=() cmd
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+    done
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo "${0##*/}: missing required command(s): ${missing[*]}" >&2
+        exit 1
+    fi
+}
+
+require_cmds git sha256sum sed cut date cp mkdir dirname
 
 HOME_DIR="$(cd -- "$HOME_DIR" 2>/dev/null && pwd || echo "$HOME_DIR")"
 
