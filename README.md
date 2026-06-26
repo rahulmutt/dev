@@ -24,6 +24,25 @@ Point your Dev Container at the published image. A minimal
 Works with VS Code Dev Containers, [DevPod](https://devpod.sh/), GitHub
 Codespaces, or any other [`devcontainer`](https://containers.dev/) runtime.
 
+### Image tags
+
+Every commit on `main` whose CI build passes (the green check mark) is published
+to GHCR and can be pulled by any OCI-compatible container runtime — Docker,
+Podman, containerd/nerdctl, etc. Images are multi-arch (`linux/amd64` and
+`linux/arm64`). Two tags are produced per build:
+
+- `ghcr.io/rahulmutt/dev:latest` — the most recent successful `main` build.
+- `ghcr.io/rahulmutt/dev:sha-<short-sha>` — a specific commit (e.g.
+  `sha-c6a8c12`), pinned and immutable.
+
+```sh
+docker pull ghcr.io/rahulmutt/dev:latest
+podman pull ghcr.io/rahulmutt/dev:sha-c6a8c12
+```
+
+Pin to a `sha-` tag for reproducible environments; use `latest` to track the tip
+of `main`.
+
 The `post-create.sh` step (baked into the image) runs on container creation to
 finish setup: installing the mise-managed toolchain, tmux/nvim plugins, and any
 optional components you enabled via environment variables (see below).
