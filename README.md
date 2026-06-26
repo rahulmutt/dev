@@ -61,6 +61,49 @@ optional components you enabled via environment variables (see below).
 - **Dotfiles:** preconfigured `.claude`, `.codex`, `.config`, `.pi`, and
   `.tmux.conf`.
 
+## Syncing the dotfiles to your own machine
+
+You don't need the container to use these dotfiles. The repo ships a sync tool
+that copies the tracked dotfiles (`.claude`, `.codex`, `.config`, `.pi`,
+`.tmux.conf`) into your home directory.
+
+It is safe by design: for each file it compares the SHA-256 of the repo copy
+against the one already on your system, skips anything identical, and — before
+replacing a file that differs — backs the existing one up next to the original
+as `<file>.bak.<timestamp>`. Because it only ever syncs git-tracked files,
+anything ignored by `.gitignore` (credentials such as `.pi/agent/auth.json`,
+installed packages) is never touched.
+
+### One-line install
+
+Clone into a temp directory, sync, and clean up — all in one go:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh
+```
+
+Preview first without changing anything, or skip the confirmation prompt, by
+passing flags through after `-s --`:
+
+```sh
+# show what would change, modify nothing
+curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
+
+# apply without the interactive prompt
+curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --yes
+```
+
+### From a local checkout
+
+If you already have the repo cloned, run the sync script directly:
+
+```sh
+scripts/sync-dotfiles.sh            # preview the changes, then confirm
+scripts/sync-dotfiles.sh --dry-run  # preview only, change nothing
+scripts/sync-dotfiles.sh --yes      # apply without the prompt
+scripts/sync-dotfiles.sh --home DIR # sync into a different target directory
+```
+
 ## Configuration
 
 ### Optional components (environment variables)
@@ -109,6 +152,22 @@ pi's plugins are declared in `.pi/agent/settings.json`:
 
 Add or remove entries there — pi installs any missing ones automatically on its
 next startup. No manual `pi install` step is needed.
+
+## Development
+
+The repo's own dev tooling is declared in the root `mise.toml` (separate from
+the home toolchain in `.config/mise/config.toml`). It pins `shellcheck` and
+defines a few tasks:
+
+```sh
+mise run lint   # shellcheck every shell script
+mise run test   # run the dotfiles-sync integration tests
+mise run check  # lint + test
+```
+
+The integration tests in `scripts/tests/` exercise `sync-dotfiles.sh` against a
+throwaway `$HOME`, covering the safe-backup behaviour (adjacent timestamped
+backups, skipping identical files, never syncing git-ignored secrets).
 
 ## ngrok
 

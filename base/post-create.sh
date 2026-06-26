@@ -69,9 +69,12 @@ if [ "${INSTALL_NIX:-}" = "true" ]; then
     fi
   fi
 
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
 
+  # The single quotes are intentional: we want the literal line written to
+  # .bashrc and expanded when bash starts, not expanded here.
+  # shellcheck disable=SC2016
   if ! grep -Fq '. "$HOME/.nix-profile/etc/profile.d/nix.sh"' "${HOME}/.bashrc" 2>/dev/null; then
     echo '. "$HOME/.nix-profile/etc/profile.d/nix.sh"' >> "${HOME}/.bashrc"
   fi
@@ -79,7 +82,7 @@ fi
 
 # --- install devenv ---
 if [ "${INSTALL_DEVENV:-}" = "true" ]; then
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
   nix profile install nixpkgs#devenv
 fi

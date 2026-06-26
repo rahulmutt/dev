@@ -1,0 +1,32 @@
+name: Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Load only the repo's root mise.toml (dev tooling: shellcheck). This ignores
+  # the bundled home dotfile .config/mise/config.toml — which mise would
+  # otherwise pick up as a project config — so CI doesn't try to install the
+  # entire container toolchain (node, python, claude, ...).
+  MISE_OVERRIDE_CONFIG_FILENAMES: mise.toml
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+
+      - name: Lint and test
+        run: mise run check

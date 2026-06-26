@@ -1,0 +1,18 @@
+# Project-level mise config for working on this repo (layers on top of the
+# home toolchain in .config/mise/config.toml). Holds dev-only tooling such as
+# the shell linter and repo tasks.
+
+[tools]
+shellcheck = "0.11.0"
+
+[tasks.lint]
+description = "Shellcheck every shell script in the repo"
+run = "shellcheck base/*.sh scripts/*.sh scripts/tests/*.sh"
+
+[tasks.test]
+description = "Run the dotfiles-sync integration tests"
+run = "bash scripts/tests/sync-dotfiles.test.sh"
+
+[tasks.check]
+description = "Lint and test"
+depends = ["lint", "test"]

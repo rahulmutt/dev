@@ -13,6 +13,8 @@ fi
 POD_NAME="${1:?usage: $0 <container-name> [remote-dir]}"
 
 REMOTE_DIR="${2:-$(
+    # $HOME is intentionally expanded inside the container, not on the host.
+    # shellcheck disable=SC2016
     "$CONTAINER_CLI" exec "$POD_NAME" sh -c 'printf "%s" "$HOME/.claude/projects"'
 )}"
 
