@@ -1,4 +1,8 @@
 {
-  "plugin": ["oh-my-openagent@latest"]
+  "plugin": [
+    "oh-my-openagent@latest",
+    "devkit@git+https://github.com/rahulmutt/devkit.git",
+    "superpowers@git+https://github.com/obra/superpowers.git"
+  ],
   "$schema": "https://opencode.ai/config.json" 
 }
