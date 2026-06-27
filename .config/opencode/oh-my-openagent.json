@@ -2,150 +2,144 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "hephaestus": {
-      "model": "opencode/gpt-5-nano"
+      "model": "openrouter/deepseek/deepseek-v4-flash"
     },
     "oracle": {
-      "model": "deepseek/deepseek-v4-pro"
+      "model": "openrouter/deepseek/deepseek-v4-pro"
     },
     "librarian": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
-        },
-        {
-          "model": "deepseek/deepseek-v3.2"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "explore": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
-        },
-        {
-          "model": "deepseek/deepseek-v3.2"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "multimodal-looker": {
-      "model": "deepseek/deepseek-v4-pro"
+      "model": "openrouter/deepseek/deepseek-v4-pro"
     },
     "prometheus": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "metis": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "momus": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "atlas": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "sisyphus-junior": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "sisyphus": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         },
         {
-          "model": "deepseek/deepseek-r1-0528"
+          "model": "openrouter/deepseek/deepseek-r1-0528"
         }
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "ultrabrain": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "deep": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "artistry": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "quick": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "unspecified-low": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     },
     "unspecified-high": {
-      "model": "deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-flash"
+          "model": "openrouter/deepseek/deepseek-v4-flash"
         }
       ]
     },
     "writing": {
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
         {
-          "model": "deepseek/deepseek-v4-pro"
+          "model": "openrouter/deepseek/deepseek-v4-pro"
         }
       ]
     }
