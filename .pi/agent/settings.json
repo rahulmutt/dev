@@ -2,6 +2,8 @@
   "packages": [
     "npm:@rahulmutt/pi-ralph",
     "npm:pi-web-access",
-    "npm:pi-subagents"
+    "npm:pi-subagents",
+    "git:github.com/obra/superpowers", 
+    "git:github.com/rahulmutt/devkit"
   ]
 }
