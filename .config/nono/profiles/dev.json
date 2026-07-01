@@ -14,7 +14,6 @@
       "$HOME/.local/state/nix",
       "$HOME/.local/state/mise",
       "$HOME/.local/share/mise",
-      "$HOME/.local/share/direnv",
       "$HOME/Library/Caches",
       "/nixpkgs",
       "/nix",
@@ -23,7 +22,9 @@
     ],
     "read": [
       "$HOME/.nix-profile",
-      "$HOME/.config"
+      "$HOME/.config/mise",
+      "$HOME/.config/nix",
+      "$HOME/.config/nono"
     ],
     "read_file": [
       "$HOME/.bashrc",
