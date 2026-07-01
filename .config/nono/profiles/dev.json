@@ -18,6 +18,7 @@
       "/nixpkgs",
       "/nix",
       "/var/tmp",
+      "/tmp",
       "/private/var"
     ],
     "read": [
@@ -28,7 +29,8 @@
     ],
     "read_file": [
       "$HOME/.bashrc",
-      "$HOME/.bazelrc"
+      "$HOME/.bazelrc",
+      "/etc/gitconfig"
     ],
     "bypass_protection": [
       "$HOME/.bashrc"
