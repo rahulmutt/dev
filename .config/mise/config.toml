@@ -27,6 +27,6 @@ ast-grep = "0.44.0"
 
 "npm:@earendil-works/pi-coding-agent" = "0.80.3"
 "npm:codeburn" = "0.9.14"
-"npm:skills" = "1.5.14"
+"npm:skills" = "1.5.15"
 "github:rahulmutt/vsync" = "0.6.1"
 "github:always-further/nono" = "0.66.0"
