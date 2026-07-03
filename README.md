@@ -85,11 +85,15 @@ curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.
 Preview first without changing anything, or skip the confirmation prompt, by
 passing flags through after `-s --`:
 
-```sh
-# show what would change, modify nothing
-curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
+Show what would change, modify nothing:
 
-# apply without the interactive prompt
+```sh
+curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
+```
+
+Apply without the interactive prompt:
+
+```sh
 curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --yes
 ```
 
