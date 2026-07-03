@@ -4,6 +4,7 @@
     "npm:pi-web-access",
     "npm:pi-subagents",
     "git:github.com/obra/superpowers", 
-    "git:github.com/rahulmutt/devkit"
+    "git:github.com/rahulmutt/devkit",
+    "npm:@juicesharp/rpiv-ask-user-question"
   ]
 }
