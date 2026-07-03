@@ -62,7 +62,7 @@ if [ "${INSTALL_NIX:-}" = "true" ]; then
       rm -rf "$XDG_STATE_HOME/nix/profiles/profile"*
     fi
     
-    rm -f "$HOME/.nix-profile" "$HOME/.nix-defexpr" "$HOME/.nix-channels"
+    rm -rf "$HOME/.nix-profile" "$HOME/.nix-defexpr" "$HOME/.nix-channels"
     
     if ! command -v nix >/dev/null 2>&1; then
       sh <(curl -L https://nixos.org/nix/install) --no-daemon --no-channel-add
