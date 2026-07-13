@@ -30,3 +30,9 @@ jobs:
 
       - name: Lint and test
         run: mise run check
+
+  # On a push to main, base.yaml already runs this as the gate before the GHCR
+  # push, so don't pay for it twice.
+  devpod:
+    if: github.event_name != 'push'
+    uses: ./.github/workflows/devpod.yaml

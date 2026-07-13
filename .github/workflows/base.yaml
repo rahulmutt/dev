@@ -15,7 +15,12 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Gate: this commit's image must survive `devpod up` before it is published.
+  validate:
+    uses: ./.github/workflows/devpod.yaml
+
   build-and-push:
+    needs: validate
     runs-on: ubuntu-latest
 
     steps:

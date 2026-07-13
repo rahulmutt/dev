@@ -16,3 +16,12 @@ run = "bash scripts/tests/sync-dotfiles.test.sh"
 [tasks.check]
 description = "Lint and test"
 depends = ["lint", "test"]
+
+# Not part of `check`: it needs docker and devpod, and takes several minutes.
+# CI runs the same two steps (.github/workflows/devpod.yaml).
+[tasks.validate-devpod]
+description = "Build the image and check `devpod up` works on it"
+run = [
+  "docker build --file base/Dockerfile --tag dev:ci .",
+  "scripts/validate-devpod.sh dev:ci",
+]

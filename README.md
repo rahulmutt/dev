@@ -185,11 +185,28 @@ defines a few tasks:
 mise run lint   # shellcheck every shell script
 mise run test   # run the dotfiles-sync integration tests
 mise run check  # lint + test
+
+mise run validate-devpod  # build the image and check `devpod up` works on it
 ```
 
 The integration tests in `scripts/tests/` exercise `sync-dotfiles.sh` against a
 throwaway `$HOME`, covering the safe-backup behaviour (adjacent timestamped
 backups, skipping identical files, never syncing git-ignored secrets).
+
+`validate-devpod` (needs docker and [devpod](https://devpod.sh/); several
+minutes, so it is not part of `check`) builds the image and hands it to
+`scripts/validate-devpod.sh`, which brings up a throwaway DevPod workspace on a
+synthetic `devcontainer.json` — running the real `post-create.sh` — then asserts
+the container is usable: the `dev` user with passwordless sudo, the workspace
+source at `/workspace`, tmux and nvim plugins installed, and every tool in
+`.config/mise/config.toml` actually executing (not merely resolving to a mise
+shim).
+
+CI runs the same check as a reusable workflow (`.github/workflows/devpod.yaml`):
+on pull requests, and on `main` as a gate in front of the GHCR push, so an image
+that cannot `devpod up` is never published. It validates `linux/amd64` only —
+the runner's architecture — so the `linux/arm64` half of the published manifest
+is built but not exercised.
 
 ## ngrok
 
