@@ -79,4 +79,8 @@ jobs:
       # Brings up a throwaway workspace on the image, runs post-create.sh, and
       # asserts the toolchain works. See scripts/validate-devpod.sh.
       - name: Validate devpod up
+        env:
+          # Asserted inside the container, so a mis-wired matrix cannot pass by
+          # validating the wrong architecture.
+          EXPECT_ARCH: ${{ matrix.arch }}
         run: scripts/validate-devpod.sh "${IMAGE}" "${{ matrix.variant }}"
