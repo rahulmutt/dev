@@ -19,9 +19,19 @@ env:
 
 jobs:
   devpod:
-    name: devpod up (linux/amd64)
+    name: devpod up (${{ matrix.variant }}, linux/amd64)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+
+    strategy:
+      # The two variants fail for unrelated reasons, so let both report.
+      fail-fast: false
+      matrix:
+        # default: the image as shipped.
+        # devenv:  INSTALL_DEVENV=true via remoteEnv, so post-create.sh also
+        #          installs single-user Nix and devenv. Slower, and the only
+        #          coverage the optional components get.
+        variant: [default, devenv]
 
     steps:
       - name: Checkout repository
@@ -61,4 +71,4 @@ jobs:
       # Brings up a throwaway workspace on the image, runs post-create.sh, and
       # asserts the toolchain works. See scripts/validate-devpod.sh.
       - name: Validate devpod up
-        run: scripts/validate-devpod.sh "${IMAGE}"
+        run: scripts/validate-devpod.sh "${IMAGE}" "${{ matrix.variant }}"

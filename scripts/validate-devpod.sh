@@ -5,24 +5,39 @@
 # IMAGE, which runs the image's post-create.sh, then asserts the toolchain is
 # installed and actually runnable inside the container.
 #
-# Usage: scripts/validate-devpod.sh <image>
+# Usage: scripts/validate-devpod.sh <image> [variant]
 #   scripts/validate-devpod.sh dev:ci                    # a locally built tag
 #   scripts/validate-devpod.sh ghcr.io/rahulmutt/dev:latest
+#   scripts/validate-devpod.sh dev:ci devenv             # also exercise INSTALL_DEVENV
+#
+# The `devenv` variant sets INSTALL_DEVENV via remoteEnv, exactly as the README
+# tells users to, which makes post-create.sh install single-user Nix and then
+# devenv on top of it. DevPod merges remoteEnv into the postCreateCommand
+# environment (pkg/devcontainer/setup/lifecyclehooks.go), so the env var lands.
 set -euo pipefail
 
 image="${1:-}"
+variant="${2:-default}"
 
 if [ -z "$image" ]; then
-  echo "usage: $0 <image>" >&2
+  echo "usage: $0 <image> [default|devenv]" >&2
   exit 2
 fi
+
+case "$variant" in
+  default | devenv) ;;
+  *)
+    echo "unknown variant '$variant' (expected 'default' or 'devenv')" >&2
+    exit 2
+    ;;
+esac
 
 if ! command -v devpod >/dev/null 2>&1; then
   echo "devpod not found: https://devpod.sh/docs/getting-started/install" >&2
   exit 2
 fi
 
-workspace_id="${DEVPOD_WORKSPACE_ID:-dev-validate}"
+workspace_id="${DEVPOD_WORKSPACE_ID:-dev-validate-${variant}}"
 workspace_dir="$(mktemp -d)"
 
 # Every binary the image is expected to ship. Each is *run*, not merely resolved
@@ -48,6 +63,11 @@ trap cleanup EXIT
 # published sha- tag, and the whole point here is to test the image we were
 # handed. Keep these fields in step with the example in the README, since this
 # is the config an end user is expected to copy.
+remote_env='{}'
+if [ "$variant" = "devenv" ]; then
+  remote_env='{ "INSTALL_DEVENV": "true" }'
+fi
+
 mkdir -p "$workspace_dir/.devcontainer"
 cat > "$workspace_dir/.devcontainer/devcontainer.json" <<JSON
 {
@@ -55,7 +75,8 @@ cat > "$workspace_dir/.devcontainer/devcontainer.json" <<JSON
   "image": "${image}",
   "workspaceFolder": "/workspace",
   "remoteUser": "dev",
-  "postCreateCommand": "post-create.sh"
+  "postCreateCommand": "post-create.sh",
+  "remoteEnv": ${remote_env}
 }
 JSON
 
@@ -75,6 +96,7 @@ echo "==> smoke testing the container"
 # keep quoting and newlines out of the equation.
 smoke_script="$(
   printf 'tools="%s"\n' "${tools[*]}"
+  printf 'variant="%s"\n' "$variant"
   cat <<'REMOTE'
 set -u
 
@@ -112,6 +134,14 @@ for tool in $tools; do
     fail "$tool $flag"
   fi
 done
+
+# --- optional components ---
+# The image puts ~/.nix-profile/bin on PATH, and `nix profile install` drops
+# devenv there too, so both resolve without sourcing nix.sh.
+if [ "$variant" = "devenv" ]; then
+  nix --version >/dev/null 2>&1 && pass "nix" || fail "nix --version"
+  devenv version >/dev/null 2>&1 && pass "devenv" || fail "devenv version"
+fi
 
 if [ "$failures" -gt 0 ]; then
   echo "${failures} check(s) failed"
