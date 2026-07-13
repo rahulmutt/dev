@@ -138,7 +138,6 @@ into extra tooling. All default to off.
 | ---------------- | ------------------------------------------------------------------- |
 | `INSTALL_NIX`    | Install Nix (single-user) and wire it into `.bashrc`.               |
 | `INSTALL_DEVENV` | Install [devenv](https://devenv.sh/) (implies `INSTALL_NIX=true`).  |
-| `INSTALL_NGROK`  | Install the [ngrok](https://ngrok.com/) agent.                      |
 
 Example:
 
@@ -147,8 +146,7 @@ Example:
   "image": "ghcr.io/rahulmutt/dev:sha-c6a8c12",
   "postCreateCommand": "post-create.sh",
   "remoteEnv": {
-    "INSTALL_DEVENV": "true",
-    "INSTALL_NGROK": "true"
+    "INSTALL_DEVENV": "true"
   }
 }
 ```
@@ -223,10 +221,12 @@ It validates `linux/amd64` only — the runner's architecture — so the
 
 ## ngrok
 
-Traffic policy files for the ngrok agent live in `ngrok/`:
+The image does not ship the [ngrok](https://ngrok.com/) agent, and does not
+install it. These are traffic policy files for an agent you install yourself,
+wherever you run it:
 
-- `traffic-policy-google.yaml`
-- `traffic-policy-token-whitelist.yaml`
+- `ngrok/traffic-policy-google.yaml`
+- `ngrok/traffic-policy-token-whitelist.yaml`
 
 Use one with:
 

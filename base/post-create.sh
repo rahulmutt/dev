@@ -28,23 +28,6 @@ if [ "${INSTALL_DEVENV:-}" = "true" ]; then
   INSTALL_NIX="${INSTALL_NIX:-true}"
 fi
 
-# --- install ngrok (system-level) ---
-if [ "${INSTALL_NGROK:-}" = "true" ]; then
-  sudo mkdir -p /etc/apt/keyrings
-
-  curl -fsSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-    | sudo gpg --dearmor -o /etc/apt/keyrings/ngrok.gpg
-
-  sudo chmod 0644 /etc/apt/keyrings/ngrok.gpg
-
-  echo "deb [signed-by=/etc/apt/keyrings/ngrok.gpg] https://ngrok-agent.s3.amazonaws.com bookworm main" \
-    | sudo tee /etc/apt/sources.list.d/ngrok.list >/dev/null
-
-  sudo apt-get update -y
-  sudo apt-get install -y --no-install-recommends ngrok
-  sudo rm -rf /var/lib/apt/lists/*
-fi
-
 # --- install nix (single-user) ---
 if [ "${INSTALL_NIX:-}" = "true" ]; then
   if [ ! -e "${HOME}/.nix-profile/etc/profile.d/nix.sh" ]; then
