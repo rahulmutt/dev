@@ -214,10 +214,11 @@ asserts `nix` and `devenv` run. This is the only coverage the optional
 components get.
 
 CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
-as a `[default, devenv]` matrix: on pull requests, and on `main` as a gate in
-front of the GHCR push, so an image that cannot `devpod up` is never published.
-It validates `linux/amd64` only — the runner's architecture — so the
-`linux/arm64` half of the published manifest is built but not exercised.
+as an `[amd64, arm64] x [default, devenv]` matrix: on pull requests, and on
+`main` as a gate in front of the GHCR push, so an image that cannot `devpod up`
+is never published. Both architectures of the published manifest are booted on
+native runners, so nothing is emulated. Each leg caches its build under a
+per-architecture scope, which the push then reads, so it rebuilds neither.
 
 ## ngrok
 

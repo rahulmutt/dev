@@ -58,5 +58,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # The validate legs already built and cached both architectures
+          # natively, so this is a pure consumer -- exporting again would just
+          # burn cache quota on entries nothing reads.
+          cache-from: |
+            type=gha,scope=amd64
+            type=gha,scope=arm64
