@@ -10,6 +10,9 @@
 #   scripts/validate-devpod.sh ghcr.io/rahulmutt/dev:latest
 #   scripts/validate-devpod.sh dev:ci devenv             # also exercise INSTALL_DEVENV
 #
+# Set EXPECT_ARCH=amd64|arm64 to additionally assert the container's
+# architecture, which is what stops CI from validating the wrong one.
+#
 # The `devenv` variant sets INSTALL_DEVENV via remoteEnv, exactly as the README
 # tells users to, which makes post-create.sh install single-user Nix and then
 # devenv on top of it. DevPod merges remoteEnv into the postCreateCommand
@@ -97,12 +100,29 @@ echo "==> smoke testing the container"
 smoke_script="$(
   printf 'tools="%s"\n' "${tools[*]}"
   printf 'variant="%s"\n' "$variant"
+  printf 'expect_arch="%s"\n' "${EXPECT_ARCH:-}"
   cat <<'REMOTE'
 set -u
 
 failures=0
 pass() { echo "  ok    $*"; }
 fail() { echo "  FAIL  $*"; failures=$((failures + 1)); }
+
+# --- architecture ---
+# Without this, a mis-wired matrix would run an "arm64" leg against an amd64
+# container and still go green.
+if [ -n "$expect_arch" ]; then
+  case "$expect_arch" in
+    amd64) want="x86_64" ;;
+    arm64) want="aarch64" ;;
+    *) want="$expect_arch" ;;
+  esac
+
+  got="$(uname -m)"
+  [ "$got" = "$want" ] &&
+    pass "architecture is $got ($expect_arch)" ||
+    fail "expected $want for $expect_arch, container is $got"
+fi
 
 # --- identity and workspace layout ---
 user="$(id -un)"
