@@ -1,0 +1,64 @@
+name: DevPod
+
+# Reusable. Called by check.yaml on pull requests, and by base.yaml as the gate
+# in front of the GHCR push, so a commit that cannot `devpod up` is never
+# published. Can also be run on its own from the Actions tab.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Built and validated on the runner only; never pushed.
+  IMAGE: dev:ci
+  # loft-sh currently only tags prereleases, so the `latest` download URL still
+  # resolves to the stale v0.6.15. Pin explicitly and bump deliberately.
+  DEVPOD_VERSION: v0.7.0-alpha.34
+
+jobs:
+  devpod:
+    name: devpod up (linux/amd64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # amd64 only: `load` cannot import a multi-arch manifest into the runner's
+      # docker, and the runner is amd64. The arm64 half of the published
+      # manifest is built but not exercised. Shares the build cache with
+      # base.yaml's push, so that job only pays for arm64.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./base/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install DevPod
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/devpod \
+            "https://github.com/loft-sh/devpod/releases/download/${DEVPOD_VERSION}/devpod-linux-amd64"
+          sudo chmod +x /usr/local/bin/devpod
+          devpod version
+
+      # `provider add` exits 1 if the provider is already configured (it is not
+      # idempotent), which a hosted runner never hits but a reused ~/.devpod
+      # would. `provider use` is idempotent, so fall back to it.
+      - name: Add docker provider
+        run: devpod provider add docker || devpod provider use docker
+
+      # Brings up a throwaway workspace on the image, runs post-create.sh, and
+      # asserts the toolchain works. See scripts/validate-devpod.sh.
+      - name: Validate devpod up
+        run: scripts/validate-devpod.sh "${IMAGE}"
