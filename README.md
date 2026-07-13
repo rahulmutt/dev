@@ -193,8 +193,8 @@ The integration tests in `scripts/tests/` exercise `sync-dotfiles.sh` against a
 throwaway `$HOME`, covering the safe-backup behaviour (adjacent timestamped
 backups, skipping identical files, never syncing git-ignored secrets).
 
-`validate-devpod` (needs docker and [devpod](https://devpod.sh/); several
-minutes, so it is not part of `check`) builds the image and hands it to
+`validate-devpod` (needs docker and [devpod](https://devpod.sh/); not part of
+`check`, since it builds the image) hands the image to
 `scripts/validate-devpod.sh`, which brings up a throwaway DevPod workspace on a
 synthetic `devcontainer.json` — running the real `post-create.sh` — then asserts
 the container is usable: the `dev` user with passwordless sudo, the workspace
@@ -202,11 +202,24 @@ source at `/workspace`, tmux and nvim plugins installed, and every tool in
 `.config/mise/config.toml` actually executing (not merely resolving to a mise
 shim).
 
-CI runs the same check as a reusable workflow (`.github/workflows/devpod.yaml`):
-on pull requests, and on `main` as a gate in front of the GHCR push, so an image
-that cannot `devpod up` is never published. It validates `linux/amd64` only —
-the runner's architecture — so the `linux/arm64` half of the published manifest
-is built but not exercised.
+The script takes an optional variant:
+
+```sh
+scripts/validate-devpod.sh dev:ci           # the image as shipped
+scripts/validate-devpod.sh dev:ci devenv    # also INSTALL_DEVENV=true
+```
+
+The `devenv` variant sets `INSTALL_DEVENV` through `remoteEnv`, the same way the
+[Optional components](#optional-components-environment-variables) table above
+tells you to, so `post-create.sh` installs Nix and devenv; it then additionally
+asserts `nix` and `devenv` run. This is the only coverage the optional
+components get.
+
+CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
+as a `[default, devenv]` matrix: on pull requests, and on `main` as a gate in
+front of the GHCR push, so an image that cannot `devpod up` is never published.
+It validates `linux/amd64` only — the runner's architecture — so the
+`linux/arm64` half of the published manifest is built but not exercised.
 
 ## ngrok
 
