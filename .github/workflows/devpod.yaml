@@ -19,19 +19,28 @@ env:
 
 jobs:
   devpod:
-    name: devpod up (${{ matrix.variant }}, linux/amd64)
-    runs-on: ubuntu-latest
+    name: devpod up (${{ matrix.variant }}, linux/${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
 
     strategy:
-      # The two variants fail for unrelated reasons, so let both report.
+      # The legs fail for unrelated reasons, so let all of them report.
       fail-fast: false
       matrix:
+        # Both architectures of the published manifest, on native runners:
+        # emulating an arm64 `mise install` under QEMU would take far longer
+        # than it takes to boot a real arm64 runner. Free for public repos.
+        arch: [amd64, arm64]
         # default: the image as shipped.
         # devenv:  INSTALL_DEVENV=true via remoteEnv, so post-create.sh also
         #          installs single-user Nix and devenv. Slower, and the only
         #          coverage the optional components get.
         variant: [default, devenv]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
@@ -40,25 +49,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # amd64 only: `load` cannot import a multi-arch manifest into the runner's
-      # docker, and the runner is amd64. The arm64 half of the published
-      # manifest is built but not exercised. Shares the build cache with
-      # base.yaml's push, so that job only pays for arm64.
+      # Single-platform and `load`ed, because a multi-arch manifest cannot be
+      # imported into the runner's docker. Each arch caches under its own scope;
+      # base.yaml's push reads both, so it builds neither from scratch.
       - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./base/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/${{ matrix.arch }}
           load: true
           tags: ${{ env.IMAGE }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
       - name: Install DevPod
         run: |
           sudo curl -fsSL -o /usr/local/bin/devpod \
-            "https://github.com/loft-sh/devpod/releases/download/${DEVPOD_VERSION}/devpod-linux-amd64"
+            "https://github.com/loft-sh/devpod/releases/download/${DEVPOD_VERSION}/devpod-linux-${{ matrix.arch }}"
           sudo chmod +x /usr/local/bin/devpod
           devpod version
 
