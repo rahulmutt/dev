@@ -6,7 +6,7 @@
 # Usage:
 #   scripts/mise-bump.sh [--summary-out <file>]           # bump, then write the summary
 #   scripts/mise-bump.sh --summary <before> <after>       # render a summary only
-#   scripts/mise-bump.sh --partial-bump <mise-stderr>      # was the bump partial?
+#   scripts/mise-bump.sh --partial-bump <mise-stderr>     # was the bump partial?
 #
 # The --summary and --partial-bump forms are pure functions -- over two config
 # files, and over a captured stderr log, respectively -- that run no mise and
@@ -127,6 +127,7 @@ bump() {
     if tool_resolution_failed "$stderr_log"; then
         echo "mise-bump: mise failed to resolve one or more pinned tools (see stderr above)." >&2
         echo "mise-bump: refusing to open a PR for a partial bump." >&2
+        cp "$before" "$CONFIG"  # Refusal must leave no changes behind
         exit 1
     fi
 
