@@ -10,8 +10,11 @@ description = "Shellcheck every shell script in the repo"
 run = "shellcheck base/*.sh scripts/*.sh scripts/tests/*.sh"
 
 [tasks.test]
-description = "Run the dotfiles-sync integration tests"
-run = "bash scripts/tests/sync-dotfiles.test.sh"
+description = "Run the shell-script tests"
+run = [
+  "bash scripts/tests/sync-dotfiles.test.sh",
+  "bash scripts/tests/mise-bump.test.sh",
+]
 
 [tasks.check]
 description = "Lint and test"
