@@ -16,9 +16,12 @@ on:
     - cron: "17 6 * * *"
   workflow_dispatch:
 
+# GITHUB_TOKEN is used only to read the releases API (so the github: backend
+# avoids the unauthenticated rate limit); it does not write. The branch and PR
+# are opened with the MISE_BUMP_TOKEN PAT. Write scopes are unnecessary; omit them
+# to follow least privilege.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # One bump at a time, so a manual run cannot race the nightly one onto the
 # same branch.
