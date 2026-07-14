@@ -8,6 +8,13 @@ name: Mise Bump
 # GitHub does not fire `pull_request` workflows for PRs opened with GITHUB_TOKEN,
 # and the entire point of the PR is that check.yaml -> devpod.yaml proves the new
 # pins still `mise install` on both architectures before a human merges.
+#
+# The `mise-bump` branch is machine-owned: every run rebuilds it from a fresh
+# checkout of `main` and force-pushes over whatever was there. Do NOT hand-edit
+# it -- a human commit pushed to `mise-bump` (say, dropping a pin that broke
+# CI) is destroyed without warning by tomorrow's run. To land a curated subset
+# of a day's bumps, edit and merge the PR the same day it's opened; otherwise
+# the next run reverts the edit.
 
 on:
   schedule:
@@ -42,6 +49,16 @@ jobs:
           # when it does, this workflow starts failing with a 403 rather than
           # quietly doing nothing.
           token: ${{ secrets.MISE_BUMP_TOKEN }}
+          # checkout defaults to persisting this token as an HTTP extraheader
+          # in .git/config for the rest of the job. The very next step runs
+          # `mise upgrade`, which downloads and executes arbitrary upstream
+          # code as this same user (the npm: backend runs package lifecycle
+          # scripts, and --minimum-release-age 0s deliberately skips any
+          # quarantine window). A compromised upstream could read
+          # .git/config and exfiltrate a token with write access to this
+          # repo. peter-evans/create-pull-request authenticates with its own
+          # `token:` input, so the checkout credential is not needed at all.
+          persist-credentials: false
 
       - name: Set up mise
         uses: jdx/mise-action@v2
