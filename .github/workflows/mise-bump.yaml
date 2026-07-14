@@ -1,0 +1,72 @@
+name: Mise Bump
+
+# Daily check for newer releases of the pinned container toolchain in
+# .config/mise/config.toml. If anything moved, open -- or refresh -- a single
+# rolling PR.
+#
+# The PR is deliberately opened with a PAT rather than the default GITHUB_TOKEN:
+# GitHub does not fire `pull_request` workflows for PRs opened with GITHUB_TOKEN,
+# and the entire point of the PR is that check.yaml -> devpod.yaml proves the new
+# pins still `mise install` on both architectures before a human merges.
+
+on:
+  schedule:
+    # 06:17 UTC. Off-the-hour on purpose: GitHub's scheduler is most contended
+    # at :00 and delays those runs the longest.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# One bump at a time, so a manual run cannot race the nightly one onto the
+# same branch.
+concurrency:
+  group: mise-bump
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # A fine-grained PAT scoped to this repo, with contents:write and
+          # pull-requests:write. Fine-grained PATs expire (one year maximum);
+          # when it does, this workflow starts failing with a 403 rather than
+          # quietly doing nothing.
+          token: ${{ secrets.MISE_BUMP_TOKEN }}
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          # Only the mise CLI is wanted here. The action's default is to run
+          # `mise install`, which would install the toolchain's *current* pins
+          # for nothing -- the bump installs the new ones itself.
+          install: false
+
+      - name: Bump pinned tool versions
+        env:
+          # The github: backend resolves releases through the API, which is
+          # rate-limited when unauthenticated.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/mise-bump.sh --summary-out "${RUNNER_TEMP}/mise-bump-body.md"
+
+      # No-ops when the bump changed nothing: no diff, no branch, no PR.
+      # Rebuilt from a fresh checkout of main each run and force-pushed, so an
+      # open bump PR is always a clean diff against current main rather than an
+      # accreting pile.
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ secrets.MISE_BUMP_TOKEN }}
+          branch: mise-bump
+          delete-branch: true
+          labels: dependencies
+          add-paths: .config/mise/config.toml
+          commit-message: "chore(mise): bump pinned toolchain versions"
+          title: "chore(mise): bump pinned toolchain versions"
+          body-path: ${{ runner.temp }}/mise-bump-body.md
