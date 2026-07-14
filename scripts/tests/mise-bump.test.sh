@@ -85,6 +85,41 @@ assert_not_contains "$OUT" '| Tool |' "no empty table is emitted"
 
 # ===========================================================================
 echo
+echo "test: --partial-bump detects a tool that failed to resolve"
+cat > "$WORK/stderr-failed.log" <<'EOF'
+mise INFO installing jq 1.8.2
+mise WARN Failed to resolve tool version list for npm:skills : some network error
+mise INFO installing ripgrep 15.1.0
+EOF
+if bash "$BUMP" --partial-bump "$WORK/stderr-failed.log"; then
+    ok "warning in stderr is detected as a partial bump"
+else
+    bad "warning in stderr is detected as a partial bump (exited nonzero)"
+fi
+
+echo
+echo "test: --partial-bump treats clean stderr as a full bump"
+cat > "$WORK/stderr-clean.log" <<'EOF'
+mise INFO installing jq 1.8.2
+mise INFO installing ripgrep 15.1.0
+EOF
+if bash "$BUMP" --partial-bump "$WORK/stderr-clean.log"; then
+    bad "clean stderr is not mistaken for a partial bump (exited zero)"
+else
+    ok "clean stderr is not mistaken for a partial bump"
+fi
+
+echo
+echo "test: --partial-bump treats empty stderr as a full bump"
+: > "$WORK/stderr-empty.log"
+if bash "$BUMP" --partial-bump "$WORK/stderr-empty.log"; then
+    bad "empty stderr is not mistaken for a partial bump (exited zero)"
+else
+    ok "empty stderr is not mistaken for a partial bump"
+fi
+
+# ===========================================================================
+echo
 if [ "$FAIL" -eq 0 ]; then
     printf '\033[32mAll %d checks passed.\033[0m\n' "$PASS"
     exit 0
