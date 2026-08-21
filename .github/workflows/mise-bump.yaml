@@ -67,6 +67,7 @@ jobs:
           # `mise install`, which would install the toolchain's *current* pins
           # for nothing -- the bump installs the new ones itself.
           install: false
+          cache_key_prefix: mise-v2
 
       - name: Bump pinned tool versions
         env:
