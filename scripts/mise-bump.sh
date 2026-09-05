@@ -34,6 +34,10 @@ export MISE_OVERRIDE_CONFIG_FILENAMES="$CONFIG"
 # guarantee rather than a coincidence.
 export MISE_PIN=1
 
+# Tools that other pins declare as an install dependency. Bumped in their own
+# pass, before everything else -- see bump() for why.
+DEPENDENCY_TOOLS=(node)
+
 TAB="$(printf '\t')"
 
 # Emit "<tool><TAB><version>" for every pin in the [tools] table.
@@ -94,6 +98,16 @@ usage() {
 # --minimum-release-age 0s takes releases the moment they land, rather than
 # waiting out any configured quarantine: this repo's safety net is the devpod
 # matrix that runs on the resulting PR, not a waiting period.
+#
+# The bump runs in two passes, dependencies first. The npm: tools declare
+# node as an install dependency, and mise resolves that dependency against
+# the config as it stands when the plan is built. In a single pass on a day
+# node moves, the plan installs the NEW node but the npm: tools still ask for
+# the OLD node -- which was never installed on a fresh runner (mise-action runs
+# with install: false) -- and since mise 2026.9.1 that is a hard error rather
+# than a fall-through to PATH. Bumping node alone first rewrites its pin and
+# installs the new version, so the second pass sees a dependency that is both
+# current and present.
 bump() {
     local summary_out="$1" before stderr_log summary
 
@@ -112,10 +126,14 @@ bump() {
     # Capture mise's stderr to a file so tool_resolution_failed can inspect it
     # afterward, but also copy it to this job's own stderr (after the run
     # completes, so the copy is not racing mise's writes) so an operator
-    # watching the Actions log still sees everything mise printed.
-    if ! mise upgrade --bump --yes --minimum-release-age 0s 2>"$stderr_log"; then
+    # watching the Actions log still sees everything mise printed. Both passes
+    # append to the same log so the partial-bump check covers the whole bump.
+    : >"$stderr_log"
+    if ! mise upgrade --bump --yes --minimum-release-age 0s "${DEPENDENCY_TOOLS[@]}" 2>>"$stderr_log" ||
+        ! mise upgrade --bump --yes --minimum-release-age 0s 2>>"$stderr_log"; then
         cat "$stderr_log" >&2
         echo "mise-bump: mise upgrade exited nonzero" >&2
+        cp "$before" "$CONFIG"  # A failed run must leave no changes behind
         exit 1
     fi
     cat "$stderr_log" >&2
