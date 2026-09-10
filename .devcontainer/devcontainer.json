@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "image": "ghcr.io/rahulmutt/dev:sha-c6a8c12",
+  "image": "ghcr.io/rahulmutt/dev:sha-9d9be43",
   "workspaceFolder": "/workspace",
   "remoteUser": "dev",
   "postCreateCommand": "post-create.sh",
