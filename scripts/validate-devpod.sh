@@ -2,45 +2,31 @@
 # Validate that `devpod up` produces a working container from a dev image.
 #
 # Stands up a throwaway DevPod workspace whose devcontainer.json points at
-# IMAGE, which runs the image's post-create.sh, then asserts the toolchain is
-# installed and actually runnable inside the container.
+# IMAGE, which runs the image's post-create.sh, then asserts the toolchain
+# (baked in at build time, Nix and devenv included) is installed and actually
+# runnable inside the container.
 #
-# Usage: scripts/validate-devpod.sh <image> [variant]
+# Usage: scripts/validate-devpod.sh <image>
 #   scripts/validate-devpod.sh dev:ci                    # a locally built tag
 #   scripts/validate-devpod.sh ghcr.io/rahulmutt/dev:latest
-#   scripts/validate-devpod.sh dev:ci devenv             # also exercise INSTALL_DEVENV
 #
 # Set EXPECT_ARCH=amd64|arm64 to additionally assert the container's
 # architecture, which is what stops CI from validating the wrong one.
-#
-# The `devenv` variant sets INSTALL_DEVENV via remoteEnv, exactly as the README
-# tells users to, which makes post-create.sh install single-user Nix and then
-# devenv on top of it. DevPod merges remoteEnv into the postCreateCommand
-# environment (pkg/devcontainer/setup/lifecyclehooks.go), so the env var lands.
 set -euo pipefail
 
 image="${1:-}"
-variant="${2:-default}"
 
 if [ -z "$image" ]; then
-  echo "usage: $0 <image> [default|devenv]" >&2
+  echo "usage: $0 <image>" >&2
   exit 2
 fi
-
-case "$variant" in
-  default | devenv) ;;
-  *)
-    echo "unknown variant '$variant' (expected 'default' or 'devenv')" >&2
-    exit 2
-    ;;
-esac
 
 if ! command -v devpod >/dev/null 2>&1; then
   echo "devpod not found: https://devpod.sh/docs/getting-started/install" >&2
   exit 2
 fi
 
-workspace_id="${DEVPOD_WORKSPACE_ID:-dev-validate-${variant}}"
+workspace_id="${DEVPOD_WORKSPACE_ID:-dev-validate}"
 workspace_dir="$(mktemp -d)"
 
 # Every binary the image is expected to ship. Each is *run*, not merely resolved
@@ -66,11 +52,6 @@ trap cleanup EXIT
 # published sha- tag, and the whole point here is to test the image we were
 # handed. Keep these fields in step with the example in the README, since this
 # is the config an end user is expected to copy.
-remote_env='{}'
-if [ "$variant" = "devenv" ]; then
-  remote_env='{ "INSTALL_DEVENV": "true" }'
-fi
-
 mkdir -p "$workspace_dir/.devcontainer"
 cat > "$workspace_dir/.devcontainer/devcontainer.json" <<JSON
 {
@@ -78,13 +59,18 @@ cat > "$workspace_dir/.devcontainer/devcontainer.json" <<JSON
   "image": "${image}",
   "workspaceFolder": "/workspace",
   "remoteUser": "dev",
-  "postCreateCommand": "post-create.sh",
-  "remoteEnv": ${remote_env}
+  "postCreateCommand": "post-create.sh"
 }
 JSON
 
 # Proves the workspace source really lands in workspaceFolder.
 echo "devpod-validate" > "$workspace_dir/marker.txt"
+
+# `devpod ssh` may pick PATH up from .bashrc, so check the image ENV PATH with
+# a plain non-login, non-interactive shell.
+echo "==> image PATH works for non-interactive shells"
+docker run --rm "$image" sh -c 'mise --version && nix --version && devenv version' >/dev/null ||
+  { echo "image ENV PATH is missing mise, nix or devenv for non-interactive shells" >&2; exit 1; }
 
 echo "==> devpod up (image: ${image})"
 devpod up "$workspace_dir" \
@@ -99,7 +85,6 @@ echo "==> smoke testing the container"
 # keep quoting and newlines out of the equation.
 smoke_script="$(
   printf 'tools="%s"\n' "${tools[*]}"
-  printf 'variant="%s"\n' "$variant"
   printf 'expect_arch="%s"\n' "${EXPECT_ARCH:-}"
   cat <<'REMOTE'
 set -u
@@ -134,12 +119,27 @@ user="$(id -un)"
 
 sudo -n true 2>/dev/null && pass "passwordless sudo" || fail "passwordless sudo not working"
 
-# --- post-create.sh side effects ---
-[ -d "$HOME/.tmux/plugins/tpm" ] && pass "tmux plugins installed" || fail "tmux tpm missing"
-[ -d "$HOME/.local/share/nvim/lazy" ] && pass "nvim plugins installed" || fail "nvim lazy plugins missing"
+# --- build-time setup ---
+# Assert a declared plugin, not the manager: tpm is git-cloned and lazy's dir is
+# created by its bootstrap, so both exist even if the plugin install failed.
+[ -d "$HOME/.tmux/plugins/tmux-sensible" ] && pass "tmux plugins installed" || fail "tmux plugin tmux-sensible missing"
+[ -d "$HOME/.local/share/nvim/lazy/LazyVim" ] && pass "nvim plugins installed" || fail "nvim plugin LazyVim missing"
 
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"
+
+mise_path="$(command -v mise || true)"
+[ "$mise_path" = "$HOME/.local/bin/mise" ] &&
+  pass "mise is the user install" ||
+  fail "expected mise at $HOME/.local/bin/mise, got '${mise_path}'"
+
+[ "$(stat -c %U "$HOME/.local/bin/mise" 2>/dev/null)" = "dev" ] &&
+  pass "mise binary owned by dev" ||
+  fail "$HOME/.local/bin/mise is not owned by dev"
+
+[ ! -e /usr/local/bin/mise ] &&
+  pass "no root-installed mise" ||
+  fail "/usr/local/bin/mise still exists"
 
 # --- every tool runs ---
 for tool in $tools; do
@@ -155,13 +155,11 @@ for tool in $tools; do
   fi
 done
 
-# --- optional components ---
-# The image puts ~/.nix-profile/bin on PATH, and `nix profile install` drops
-# devenv there too, so both resolve without sourcing nix.sh.
-if [ "$variant" = "devenv" ]; then
-  nix --version >/dev/null 2>&1 && pass "nix" || fail "nix --version"
-  devenv version >/dev/null 2>&1 && pass "devenv" || fail "devenv version"
-fi
+# --- nix + devenv (always installed) ---
+# Resolved through the image's PATH, without sourcing nix.sh, as a
+# non-interactive shell would.
+nix --version >/dev/null 2>&1 && pass "nix" || fail "nix --version"
+devenv version >/dev/null 2>&1 && pass "devenv" || fail "devenv version"
 
 if [ "$failures" -gt 0 ]; then
   echo "${failures} check(s) failed"

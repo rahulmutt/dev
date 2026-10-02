@@ -1,76 +1,28 @@
 #!/usr/bin/env bash
+#
+# post-create.sh — runs on container creation (the devcontainer
+# postCreateCommand), from the workspace folder.
+#
+# The home toolchain, Nix, devenv and the tmux/nvim plugins are all baked into
+# the image at build time (base/Dockerfile). This only does what needs the
+# workspace to exist: its own mise config.
 set -euo pipefail
 
+# --- legacy opt-ins ---
+for var in INSTALL_NIX INSTALL_DEVENV; do
+  if [ -n "${!var:-}" ]; then
+    echo "post-create.sh: ${var} is no longer needed -- Nix and devenv are always installed. You can remove it." >&2
+  fi
+done
+
 # --- trust project mise config if present ---
-if [ -f mise.toml ]; then 
+if [ -f mise.toml ]; then
   mise trust --yes mise.toml || true
 fi
 
-if [ -f .config/mise/config.toml ]; then 
+if [ -f .config/mise/config.toml ]; then
   mise trust --yes .config/mise/config.toml || true
 fi
 
-# --- install mise-managed tools ---
+# --- install workspace mise tools (the home toolchain is already present) ---
 mise install
-
-# --- install tmux plugins ---
-if [ -x "${HOME}/.tmux/plugins/tpm/bin/install_plugins" ]; then
-  "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true
-fi
-
-# --- install nvim plugins ---
-if command -v nvim >/dev/null 2>&1; then
-  nvim --headless "+Lazy! sync" +qa || true
-fi
-
-# --- devenv implies nix ---
-if [ "${INSTALL_DEVENV:-}" = "true" ]; then
-  INSTALL_NIX="${INSTALL_NIX:-true}"
-fi
-
-# --- install nix (single-user) ---
-if [ "${INSTALL_NIX:-}" = "true" ]; then
-  if [ ! -e "${HOME}/.nix-profile/etc/profile.d/nix.sh" ]; then
-    sudo mkdir -p /nix
-    sudo chown -R "$(id -u):$(id -g)" /nix
-    sudo chmod 0755 /nix
-
-    mkdir -p "${HOME}/.config/nix"
-
-    export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-
-    # If an old shared profile was previously managed by `nix profile`,
-    # the installer's use of `nix-env` will fail.
-    if [ -e "$XDG_STATE_HOME/nix/profiles/profile" ]; then
-      rm -rf "$XDG_STATE_HOME/nix/profiles/profile"*
-    fi
-    
-    rm -rf "$HOME/.nix-profile" "$HOME/.nix-defexpr" "$HOME/.nix-channels"
-    
-    if ! command -v nix >/dev/null 2>&1; then
-      sh <(curl -L https://nixos.org/nix/install) --no-daemon --no-channel-add
-    fi
-  fi
-
-  # shellcheck disable=SC1090,SC1091
-  . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
-
-  # The single quotes are intentional: we want the literal line written to
-  # .bashrc and expanded when bash starts, not expanded here.
-  # shellcheck disable=SC2016
-  if ! grep -Fq '. "$HOME/.nix-profile/etc/profile.d/nix.sh"' "${HOME}/.bashrc" 2>/dev/null; then
-    echo '. "$HOME/.nix-profile/etc/profile.d/nix.sh"' >> "${HOME}/.bashrc"
-  fi
-fi
-
-# --- install devenv ---
-if [ "${INSTALL_DEVENV:-}" = "true" ]; then
-  # shellcheck disable=SC1090,SC1091
-  . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
-  nix profile install nixpkgs#devenv
-fi
-
-# --- pi tooling ---
-# Plugins are declared in ~/.pi/agent/settings.json (baked in from .pi/ in the
-# repo). pi installs any missing ones automatically on first startup, so there's
-# nothing to do here.

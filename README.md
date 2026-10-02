@@ -43,17 +43,20 @@ podman pull ghcr.io/rahulmutt/dev:sha-c6a8c12
 Pin to a `sha-` tag for reproducible environments; use `latest` to track the tip
 of `main`.
 
-The `post-create.sh` step (baked into the image) runs on container creation to
-finish setup: installing the mise-managed toolchain, tmux/nvim plugins, and any
-optional components you enabled via environment variables (see below).
+The toolchain, Nix, devenv and the tmux/nvim plugins are all installed when the
+image is built, so a new container is ready immediately. The `post-create.sh`
+step (baked into the image) only trusts and installs the workspace's own
+`mise.toml`, if it has one.
 
 ## What's inside
 
 - **Base:** Debian trixie, non-root `dev` user with passwordless `sudo`, UTF-8
   locale, `nvim` as `$EDITOR`, Chromium for headless browser use.
-- **Toolchain** (managed by [mise](https://mise.jdx.dev/), see
+- **Toolchain** (managed by a user-installed [mise](https://mise.jdx.dev/), see
   `.config/mise/config.toml`): ripgrep, fd, fzf, jq, bat, glow, btop, lazygit,
   gh, tmux, tree-sitter, neovim, node, bun, python, dprint, ttyd.
+- **Nix + devenv:** single-user [Nix](https://nixos.org/) and
+  [devenv](https://devenv.sh/), always installed.
 - **AI coding agents:** [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent),
   [claude](https://www.npmjs.com/package/@anthropic-ai/claude-code),
   [codex](https://www.npmjs.com/package/@openai/codex), and opencode — plus
@@ -128,33 +131,22 @@ curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.
 
 ## Configuration
 
-### Optional components (environment variables)
+### Nix and devenv
 
-These are read by `post-create.sh` at container-creation time. Set them through
-your Dev Container's `remoteEnv`/`containerEnv` (or the host environment) to opt
-into extra tooling. All default to off.
-
-| Variable         | Effect                                                              |
-| ---------------- | ------------------------------------------------------------------- |
-| `INSTALL_NIX`    | Install Nix (single-user) and wire it into `.bashrc`.               |
-| `INSTALL_DEVENV` | Install [devenv](https://devenv.sh/) (implies `INSTALL_NIX=true`).  |
-
-Example:
-
-```jsonc
-{
-  "image": "ghcr.io/rahulmutt/dev:sha-c6a8c12",
-  "postCreateCommand": "post-create.sh",
-  "remoteEnv": {
-    "INSTALL_DEVENV": "true"
-  }
-}
-```
+Both are always installed. The `INSTALL_NIX` and `INSTALL_DEVENV` variables
+that used to opt into them are no longer needed; if set, `post-create.sh` just
+prints a reminder to remove them.
 
 ### Toolchain versions
 
-Pin or change tool versions by editing `.config/mise/config.toml`. The
-`post-create.sh` step runs `mise install` to apply it.
+Pin or change tool versions by editing `.config/mise/config.toml`; the image
+build runs `mise install` against it. Downloaded archives are kept in BuildKit
+cache mounts (persisted across CI runners); a one-pin bump re-extracts most
+tools from the cache, but re-downloads the bumped tool plus those whose mise
+backends ignore caching (bun, python, neovim, and github: tools like vsync
+and nono). The build also accepts an optional GitHub token, since mise makes
+about 26 GitHub API calls and the unauthenticated limit is 60 per hour:
+`docker build --secret id=github_token,env=GITHUB_TOKEN …`.
 
 ### pi plugins
 
@@ -194,31 +186,22 @@ backups, skipping identical files, never syncing git-ignored secrets).
 `validate-devpod` (needs docker and [devpod](https://devpod.sh/); not part of
 `check`, since it builds the image) hands the image to
 `scripts/validate-devpod.sh`, which brings up a throwaway DevPod workspace on a
-synthetic `devcontainer.json` — running the real `post-create.sh` — then asserts
-the container is usable: the `dev` user with passwordless sudo, the workspace
-source at `/workspace`, tmux and nvim plugins installed, and every tool in
-`.config/mise/config.toml` actually executing (not merely resolving to a mise
-shim).
-
-The script takes an optional variant:
-
-```sh
-scripts/validate-devpod.sh dev:ci           # the image as shipped
-scripts/validate-devpod.sh dev:ci devenv    # also INSTALL_DEVENV=true
-```
-
-The `devenv` variant sets `INSTALL_DEVENV` through `remoteEnv`, the same way the
-[Optional components](#optional-components-environment-variables) table above
-tells you to, so `post-create.sh` installs Nix and devenv; it then additionally
-asserts `nix` and `devenv` run. This is the only coverage the optional
-components get.
+synthetic `devcontainer.json` — running the real `post-create.sh` on the built
+image — then asserts the container is usable: the `dev` user with passwordless
+sudo, the workspace source at `/workspace`, tmux and nvim plugins installed,
+Nix and devenv working, and every tool in `.config/mise/config.toml` actually
+executing (not merely resolving to a mise shim).
 
 CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
-as an `[amd64, arm64] x [default, devenv]` matrix: on pull requests, and on
+once per architecture (`amd64`, `arm64`): on pull requests, and on
 `main` as a gate in front of the GHCR push, so an image that cannot `devpod up`
 is never published. Both architectures of the published manifest are booted on
 native runners, so nothing is emulated. Each leg caches its build under a
-per-architecture scope, which the push then reads, so it rebuilds neither.
+per-architecture scope, which the push then reads, so it rebuilds neither. The
+build's mise download cache is carried between runners with
+`buildkit-cache-dance`; a one-pin bump re-downloads the bumped tool plus those
+whose mise backends ignore caching (bun, python, neovim, and github: tools),
+while everything else comes from the cache.
 
 ## ngrok
 

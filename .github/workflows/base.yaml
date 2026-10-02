@@ -58,6 +58,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Only needed on a layer-cache miss, when `mise install` really runs.
+          secrets: github_token=${{ secrets.GITHUB_TOKEN }}
           # The validate legs already built and cached both architectures
           # natively, so this is a pure consumer -- exporting again would just
           # burn cache quota on entries nothing reads.

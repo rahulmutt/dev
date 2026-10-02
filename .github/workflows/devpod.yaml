@@ -19,7 +19,7 @@ env:
 
 jobs:
   devpod:
-    name: devpod up (${{ matrix.variant }}, linux/${{ matrix.arch }})
+    name: devpod up (linux/${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
 
@@ -31,11 +31,6 @@ jobs:
         # emulating an arm64 `mise install` under QEMU would take far longer
         # than it takes to boot a real arm64 runner. Free for public repos.
         arch: [amd64, arm64]
-        # default: the image as shipped.
-        # devenv:  INSTALL_DEVENV=true via remoteEnv, so post-create.sh also
-        #          installs single-user Nix and devenv. Slower, and the only
-        #          coverage the optional components get.
-        variant: [default, devenv]
         include:
           - arch: amd64
             runner: ubuntu-latest
@@ -49,6 +44,41 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # The Dockerfile's `mise install` keeps downloaded archives in BuildKit
+      # cache mounts, which a fresh runner doesn't have. Restore them from the
+      # Actions cache, falling back to the previous config's entry on a bump so
+      # only the bumped tool downloads.
+      - name: Restore BuildKit cache mounts
+        id: mounts-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/buildkit-mounts
+          key: buildkit-mounts-${{ matrix.arch }}-${{ hashFiles('.config/mise/config.toml') }}
+          restore-keys: buildkit-mounts-${{ matrix.arch }}-
+
+      # Injects the restored dirs into the mounts before the build, and (post
+      # step, which runs before actions/cache saves) extracts them after.
+      # The ids and targets must match the RUN --mount flags in base/Dockerfile.
+      - name: Inject BuildKit cache mounts
+        uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723 # v3.4.0
+        with:
+          skip-extraction: ${{ steps.mounts-cache.outputs.cache-hit }}
+          cache-map: |
+            {
+              "${{ runner.temp }}/buildkit-mounts/mise-downloads": {
+                "target": "/home/dev/.local/share/mise/downloads",
+                "id": "mise-downloads-${{ matrix.arch }}", "uid": "1000", "gid": "1000"
+              },
+              "${{ runner.temp }}/buildkit-mounts/mise-cache": {
+                "target": "/home/dev/.cache/mise",
+                "id": "mise-cache-${{ matrix.arch }}", "uid": "1000", "gid": "1000"
+              },
+              "${{ runner.temp }}/buildkit-mounts/npm": {
+                "target": "/home/dev/.npm",
+                "id": "npm-${{ matrix.arch }}", "uid": "1000", "gid": "1000"
+              }
+            }
+
       # Single-platform and `load`ed, because a multi-arch manifest cannot be
       # imported into the runner's docker. Each arch caches under its own scope;
       # base.yaml's push reads both, so it builds neither from scratch.
@@ -59,6 +89,8 @@ jobs:
           file: ./base/Dockerfile
           platforms: linux/${{ matrix.arch }}
           load: true
+          # Authenticates mise's GitHub API calls (60 req/hour unauthenticated).
+          secrets: github_token=${{ secrets.GITHUB_TOKEN }}
           tags: ${{ env.IMAGE }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
@@ -83,4 +115,4 @@ jobs:
           # Asserted inside the container, so a mis-wired matrix cannot pass by
           # validating the wrong architecture.
           EXPECT_ARCH: ${{ matrix.arch }}
-        run: scripts/validate-devpod.sh "${IMAGE}" "${{ matrix.variant }}"
+        run: scripts/validate-devpod.sh "${IMAGE}"
