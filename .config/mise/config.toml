@@ -26,3 +26,9 @@ ast-grep = "0.45.3"
 "npm:skills" = "1.7.0"
 "github:rahulmutt/vsync" = "0.6.1"
 "github:always-further/nono" = "0.79.0"
+
+[settings]
+# Install Python only from precompiled (python-build-standalone) builds. The
+# image lacks the -dev libraries a source build needs, so a fallback compile
+# just fails late at ensurepip; fail fast instead when a pin has no prebuilt.
+python.compile = false
