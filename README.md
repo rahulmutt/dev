@@ -142,7 +142,9 @@ prints a reminder to remove them.
 Pin or change tool versions by editing `.config/mise/config.toml`; the image
 build runs `mise install` against it. Downloaded archives are kept in BuildKit
 cache mounts (persisted across CI runners), so bumping one pin downloads only
-that tool.
+that tool. The build also accepts an optional GitHub token, since mise makes
+about 26 GitHub API calls and the unauthenticated limit is 60 per hour:
+`docker build --secret id=github_token,env=GITHUB_TOKEN …`.
 
 ### pi plugins
 
@@ -182,19 +184,20 @@ backups, skipping identical files, never syncing git-ignored secrets).
 `validate-devpod` (needs docker and [devpod](https://devpod.sh/); not part of
 `check`, since it builds the image) hands the image to
 `scripts/validate-devpod.sh`, which brings up a throwaway DevPod workspace on a
-synthetic `devcontainer.json` — running the real `post-create.sh` on the built image — then asserts
-the container is usable: the `dev` user with passwordless sudo, the workspace
-source at `/workspace`, tmux and nvim plugins installed, Nix and devenv, and every tool in
-`.config/mise/config.toml` actually executing (not merely resolving to a mise
-shim).
+synthetic `devcontainer.json` — running the real `post-create.sh` on the built
+image — then asserts the container is usable: the `dev` user with passwordless
+sudo, the workspace source at `/workspace`, tmux and nvim plugins installed,
+Nix and devenv working, and every tool in `.config/mise/config.toml` actually
+executing (not merely resolving to a mise shim).
 
 CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
 once per architecture (`amd64`, `arm64`): on pull requests, and on
 `main` as a gate in front of the GHCR push, so an image that cannot `devpod up`
 is never published. Both architectures of the published manifest are booted on
 native runners, so nothing is emulated. Each leg caches its build under a
-per-architecture scope, which the push then reads, so it rebuilds neither. The build's mise download cache is carried between
-runners with `buildkit-cache-dance`, so a one-pin bump downloads one tool.
+per-architecture scope, which the push then reads, so it rebuilds neither. The
+build's mise download cache is carried between runners with
+`buildkit-cache-dance`, so a one-pin bump downloads one tool.
 
 ## ngrok
 

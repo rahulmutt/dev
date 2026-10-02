@@ -104,8 +104,11 @@ RUN curl -fsSL https://mise.run | MISE_VERSION="${MISE_VERSION}" sh \
 # config.toml is copied on its own so edits to other dotfiles don't invalidate
 # this layer. The cache mounts keep downloaded archives (not installs) across
 # builds, so a bump re-extracts every tool locally but downloads only the one
-# that changed. CI persists the mounts across runners with buildkit-cache-dance
-# (.github/workflows/devpod.yaml); the ids and targets must match there.
+# that changed. The build log lists the files written during `mise install`
+# (an mtime stamp, so a re-download over an existing path is caught too): the
+# downloads, then the npm: tools' package store. CI persists the mounts across
+# runners with buildkit-cache-dance (.github/workflows/devpod.yaml); the ids and
+# targets must match there.
 #
 # chown: mounts injected by cache-dance can arrive root-owned.
 # Prune: drop downloads for versions no longer installed, so the cache doesn't
@@ -117,12 +120,15 @@ RUN --mount=type=cache,id=mise-downloads-${TARGETARCH},target=/home/${USERNAME}/
     --mount=type=cache,id=npm-${TARGETARCH},target=/home/${USERNAME}/.npm,uid=${UID},gid=${GID} \
     --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
     sudo chown -R "${UID}:${GID}" "${MISE_DATA_DIR}/downloads" "${MISE_CACHE_DIR}" "${HOME}/.npm" \
- && find "${MISE_DATA_DIR}/downloads" -type f | sort > /tmp/downloads-before \
+ && touch /tmp/mise-stamp \
  && MISE_ALWAYS_KEEP_DOWNLOAD=1 mise install \
- && find "${MISE_DATA_DIR}/downloads" -type f | sort > /tmp/downloads-after \
  && echo "==> mise downloaded (not served from cache):" \
- && comm -13 /tmp/downloads-before /tmp/downloads-after | sed "s|^${MISE_DATA_DIR}/downloads/||" \
- && rm /tmp/downloads-before /tmp/downloads-after \
+ && ( cd "${MISE_DATA_DIR}/downloads" && find . -type f -newer /tmp/mise-stamp | sed 's|^\./||' | sort ) \
+ && echo "==> mise npm store written (not served from cache):" \
+ && if [ -d "${MISE_CACHE_DIR}/npm" ]; then \
+      ( cd "${MISE_CACHE_DIR}" && find npm -type f -newer /tmp/mise-stamp | sort ); \
+    fi \
+ && rm /tmp/mise-stamp \
  && for d in "${MISE_DATA_DIR}"/downloads/*/*/; do \
       rel="${d#"${MISE_DATA_DIR}"/downloads/}"; \
       [ -d "${MISE_DATA_DIR}/installs/${rel}" ] || rm -rf "$d"; \

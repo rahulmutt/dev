@@ -66,6 +66,12 @@ JSON
 # Proves the workspace source really lands in workspaceFolder.
 echo "devpod-validate" > "$workspace_dir/marker.txt"
 
+# `devpod ssh` may pick PATH up from .bashrc, so check the image ENV PATH with
+# a plain non-login, non-interactive shell.
+echo "==> image PATH works for non-interactive shells"
+docker run --rm "$image" sh -c 'mise --version && nix --version && devenv version' >/dev/null ||
+  { echo "image ENV PATH is missing mise, nix or devenv for non-interactive shells" >&2; exit 1; }
+
 echo "==> devpod up (image: ${image})"
 devpod up "$workspace_dir" \
   --id "$workspace_id" \
@@ -114,8 +120,10 @@ user="$(id -un)"
 sudo -n true 2>/dev/null && pass "passwordless sudo" || fail "passwordless sudo not working"
 
 # --- build-time setup ---
-[ -d "$HOME/.tmux/plugins/tpm" ] && pass "tmux plugins installed" || fail "tmux tpm missing"
-[ -d "$HOME/.local/share/nvim/lazy" ] && pass "nvim plugins installed" || fail "nvim lazy plugins missing"
+# Assert a declared plugin, not the manager: tpm is git-cloned and lazy's dir is
+# created by its bootstrap, so both exist even if the plugin install failed.
+[ -d "$HOME/.tmux/plugins/tmux-sensible" ] && pass "tmux plugins installed" || fail "tmux plugin tmux-sensible missing"
+[ -d "$HOME/.local/share/nvim/lazy/LazyVim" ] && pass "nvim plugins installed" || fail "nvim plugin LazyVim missing"
 
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"
