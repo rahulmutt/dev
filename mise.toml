@@ -22,17 +22,10 @@ description = "Lint and test"
 depends = ["lint", "test"]
 
 # Not part of `check`: these need docker and devpod, and build the image.
-# CI runs the same steps as a [default, devenv] matrix (.github/workflows/devpod.yaml).
+# CI runs the same steps per architecture (.github/workflows/devpod.yaml).
 [tasks.validate-devpod]
 description = "Build the image and check `devpod up` works on it"
 run = [
   "docker build --file base/Dockerfile --tag dev:ci .",
   "scripts/validate-devpod.sh dev:ci",
-]
-
-[tasks.validate-devpod-devenv]
-description = "Same, with INSTALL_DEVENV=true (installs Nix + devenv; slow)"
-run = [
-  "docker build --file base/Dockerfile --tag dev:ci .",
-  "scripts/validate-devpod.sh dev:ci devenv",
 ]
