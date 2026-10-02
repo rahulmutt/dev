@@ -1,6 +1,6 @@
 [tools]
 ripgrep = "15.2.0"
-python = "3.14.7"
+python = "3.14.8"
 neovim = "0.12.5"
 lazygit = "0.65.1"
 jq = "1.8.2"
