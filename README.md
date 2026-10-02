@@ -141,8 +141,10 @@ prints a reminder to remove them.
 
 Pin or change tool versions by editing `.config/mise/config.toml`; the image
 build runs `mise install` against it. Downloaded archives are kept in BuildKit
-cache mounts (persisted across CI runners), so bumping one pin downloads only
-that tool. The build also accepts an optional GitHub token, since mise makes
+cache mounts (persisted across CI runners); a one-pin bump re-extracts most
+tools from the cache, but re-downloads the bumped tool plus those whose mise
+backends ignore caching (bun, python, neovim, and github: tools like vsync
+and nono). The build also accepts an optional GitHub token, since mise makes
 about 26 GitHub API calls and the unauthenticated limit is 60 per hour:
 `docker build --secret id=github_token,env=GITHUB_TOKEN …`.
 
@@ -197,7 +199,9 @@ is never published. Both architectures of the published manifest are booted on
 native runners, so nothing is emulated. Each leg caches its build under a
 per-architecture scope, which the push then reads, so it rebuilds neither. The
 build's mise download cache is carried between runners with
-`buildkit-cache-dance`, so a one-pin bump downloads one tool.
+`buildkit-cache-dance`; a one-pin bump re-downloads the bumped tool plus those
+whose mise backends ignore caching (bun, python, neovim, and github: tools),
+while everything else comes from the cache.
 
 ## ngrok
 
