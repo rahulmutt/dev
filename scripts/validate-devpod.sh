@@ -140,9 +140,12 @@ for p in superpowers@superpowers-dev ponytail@ponytail devkit@devkit-marketplace
 done
 
 # `pi list` echoes settings.json, so check each declared package's install dir.
+# A pinned source ends in @<version> or @<ref>; the install dir doesn't.
 for src in $(jq -r '.packages[] | strings' "$HOME/.pi/agent/settings.json"); do
   case "$src" in
+    npm:@*@*|npm:[!@]*@*) pkg="${src#npm:}"; dir="$HOME/.pi/agent/npm/node_modules/${pkg%@*}" ;;
     npm:*) dir="$HOME/.pi/agent/npm/node_modules/${src#npm:}" ;;
+    git:*@*) repo="${src#git:}"; dir="$HOME/.pi/agent/git/${repo%@*}" ;;
     git:*) dir="$HOME/.pi/agent/git/${src#git:}" ;;
     *) fail "pi package $src has an unchecked source type"; continue ;;
   esac

@@ -173,12 +173,13 @@ pi's plugins are declared in `.pi/agent/settings.json`:
     "git:github.com/DietrichGebert/ponytail",
     "git:github.com/rahulmutt/devkit",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:pi-hermes-memory"
+    "npm:pi-hermes-memory",
+    "npm:pi-dynamic-workflows@1.0.1"
   ]
 }
 ```
 
-The image installs them at build time (`pi update --extensions`), so a new
+The image installs them at build time (`pi install` per entry), so a new
 container starts with them ready. To change the list, edit that file and
 rebuild, or just restart pi — it installs any missing entries on its next
 startup. No manual `pi install` step is needed.

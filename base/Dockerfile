@@ -154,9 +154,13 @@ RUN --mount=type=bind,source=scripts/install-codex-plugins.sh,target=/tmp/instal
 
 # ---- pi packages ----
 # Install the packages .pi/agent/settings.json declares now, so first launch
-# doesn't clone and npm-install them. Not best effort: a failed package fails
-# the build.
-RUN pi update --extensions
+# doesn't clone and npm-install them. `pi install` per source rather than
+# `pi update --extensions`, which skips pinned (@version) sources even when
+# they're missing; it leaves settings.json as is. Not best effort: a failed
+# package fails the build.
+RUN for src in $(jq -r '.packages[] | strings' "${HOME}/.pi/agent/settings.json"); do \
+      pi install "$src" || exit 1; \
+    done
 
 # ---- tmux and nvim plugins ----
 # Best effort, as they were in post-create.sh.
