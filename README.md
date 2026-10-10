@@ -159,6 +159,12 @@ and nono). The build also accepts an optional GitHub token, since mise makes
 about 26 GitHub API calls and the unauthenticated limit is 60 per hour:
 `docker build --secret id=github_token,env=GITHUB_TOKEN …`.
 
+Inside a container, `mise-update [command…]` runs `mise self-update` and
+`mise upgrade --interactive --bump`, then execs the command if one is given
+(e.g. `mise-update claude`). A failed or cancelled update only warns. `--bump`
+rewrites the container's copy of the config, not this repo's, and
+`self-update` moves mise past the image's pinned version for that container.
+
 ### pi plugins
 
 pi's plugins are declared in `.pi/agent/settings.json`:
