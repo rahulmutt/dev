@@ -166,7 +166,6 @@ pi's plugins are declared in `.pi/agent/settings.json`:
 ```json
 {
   "packages": [
-    "npm:@rahulmutt/pi-ralph",
     "npm:pi-web-access",
     "npm:pi-subagents",
     "git:github.com/obra/superpowers",
