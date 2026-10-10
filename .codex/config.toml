@@ -9,16 +9,33 @@ approval_policy = "never"
 web_search = "cached"
 personality = "pragmatic"
 
-[sandbox_workspace_write]
-network_access = true
-
 [features]
-unified_exec = true
+memories = true
 
 [marketplaces.superpowers-dev]
-last_updated = "2026-06-23T15:11:55Z"
 source_type = "git"
 source = "https://github.com/obra/superpowers.git"
 
+[marketplaces.ponytail]
+source_type = "git"
+source = "https://github.com/DietrichGebert/ponytail.git"
+
+[marketplaces.devkit-marketplace]
+source_type = "git"
+source = "https://github.com/rahulmutt/devkit.git"
+
+[marketplaces.impeccable]
+source_type = "git"
+source = "https://github.com/pbakaus/impeccable.git"
+
 [plugins."superpowers@superpowers-dev"]
+enabled = true
+
+[plugins."ponytail@ponytail"]
+enabled = true
+
+[plugins."devkit@devkit-marketplace"]
+enabled = true
+
+[plugins."impeccable@impeccable"]
 enabled = true

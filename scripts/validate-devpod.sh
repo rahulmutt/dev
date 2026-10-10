@@ -125,6 +125,13 @@ sudo -n true 2>/dev/null && pass "passwordless sudo" || fail "passwordless sudo 
 [ -d "$HOME/.tmux/plugins/tmux-sensible" ] && pass "tmux plugins installed" || fail "tmux plugin tmux-sensible missing"
 [ -d "$HOME/.local/share/nvim/lazy/LazyVim" ] && pass "nvim plugins installed" || fail "nvim plugin LazyVim missing"
 
+codex_plugins="$(codex plugin list 2>&1 || true)"
+for p in superpowers@superpowers-dev ponytail@ponytail devkit@devkit-marketplace impeccable@impeccable; do
+  printf '%s\n' "$codex_plugins" | grep -E "^$p +installed, enabled" >/dev/null &&
+    pass "codex plugin $p installed" ||
+    fail "codex plugin $p not installed, enabled"
+done
+
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"
 
