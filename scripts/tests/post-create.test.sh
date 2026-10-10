@@ -97,6 +97,19 @@ for cmd in nix curl sudo; do
     assert_not_contains "$CALLS_OUT" "$cmd " "does not call $cmd"
 done
 
+# --- mise missing from the inherited PATH -----------------------------------
+# DevPod's Kubernetes provider runs the hook via `su dev -c` from a root agent,
+# which can arrive without the image's ENV PATH. mise lives in ~/.local/bin.
+WS="$WORK/ws-with-config"
+mkdir -p "$WORK/home/.local/bin"
+cp "$STUBS/mise" "$WORK/home/.local/bin/mise"
+run_post_create "$WS" PATH="/usr/bin:/bin"
+assert_status 0 "exits 0 when PATH lacks ~/.local/bin"
+assert_contains "$CALLS_OUT" "mise trust --yes mise.toml" "finds mise in ~/.local/bin to trust"
+assert_contains "$CALLS_OUT" "mise install" "finds mise in ~/.local/bin to install"
+assert_not_contains "$STDERR_OUT" "command not found" "no command-not-found errors"
+rm -rf "$WORK/home/.local"
+
 echo
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
