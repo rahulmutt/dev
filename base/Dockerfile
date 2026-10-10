@@ -167,9 +167,10 @@ RUN for src in $(jq -r '.packages[] | strings' "${HOME}/.pi/agent/settings.json"
 RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \
  && ( nvim --headless "+Lazy! sync" +qa || true )
 
-# ---- container-creation hook ----
-# Last, so editing it rebuilds nothing else.
+# ---- container-creation hook and helper scripts ----
+# Last, so editing them rebuilds nothing else.
 COPY --chmod=0755 ./base/post-create.sh /usr/local/bin/post-create.sh
+COPY --chmod=0755 ./base/mise-update.sh /usr/local/bin/mise-update
 
 WORKDIR /workspace
 

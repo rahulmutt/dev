@@ -168,6 +168,11 @@ mise_path="$(command -v mise || true)"
   pass "no root-installed mise" ||
   fail "/usr/local/bin/mise still exists"
 
+# Resolved, not run: it self-updates over the network and prompts.
+[ -x "$(command -v mise-update)" ] &&
+  pass "mise-update on PATH" ||
+  fail "mise-update not found on PATH"
+
 # --- every tool runs ---
 for tool in $tools; do
   case "$tool" in
