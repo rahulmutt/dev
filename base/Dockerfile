@@ -152,6 +152,12 @@ COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 RUN --mount=type=bind,source=scripts/install-codex-plugins.sh,target=/tmp/install-codex-plugins.sh \
     bash /tmp/install-codex-plugins.sh
 
+# ---- pi packages ----
+# Install the packages .pi/agent/settings.json declares now, so first launch
+# doesn't clone and npm-install them. Not best effort: a failed package fails
+# the build.
+RUN pi update --extensions
+
 # ---- tmux and nvim plugins ----
 # Best effort, as they were in post-create.sh.
 RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \

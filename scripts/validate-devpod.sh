@@ -139,6 +139,16 @@ for p in superpowers@superpowers-dev ponytail@ponytail devkit@devkit-marketplace
     fail "codex plugin $p not installed, enabled"
 done
 
+# `pi list` echoes settings.json, so check each declared package's install dir.
+for src in $(jq -r '.packages[] | strings' "$HOME/.pi/agent/settings.json"); do
+  case "$src" in
+    npm:*) dir="$HOME/.pi/agent/npm/node_modules/${src#npm:}" ;;
+    git:*) dir="$HOME/.pi/agent/git/${src#git:}" ;;
+    *) fail "pi package $src has an unchecked source type"; continue ;;
+  esac
+  [ -d "$dir" ] && pass "pi package $src installed" || fail "pi package $src not installed at $dir"
+done
+
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"
 
