@@ -16,6 +16,7 @@ run = [
   "bash scripts/tests/mise-bump.test.sh",
   "bash scripts/tests/post-create.test.sh",
   "bash scripts/tests/install-codex-plugins.test.sh",
+  "bash scripts/tests/codex-hook-hashes.test.sh",
 ]
 
 [tasks.check]

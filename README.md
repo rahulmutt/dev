@@ -64,8 +64,10 @@ step (baked into the image) only trusts and installs the workspace's own
 - **Dotfiles:** preconfigured `.claude`, `.codex`, `.config`, `.pi`, and
   `.tmux.conf`.
 - **Codex plugins:** superpowers, ponytail, devkit and impeccable, installed at build time
-  from `.codex/config.toml`. On first launch, open `/hooks` in codex and trust
-  ponytail's two hooks (again after it updates); until then only its skills run.
+  from `.codex/config.toml`, with their hooks pre-trusted there (no `/hooks`
+  step). When a plugin changes a hook, its pinned hash goes stale and codex
+  stops running it; CI's devpod check catches this. Refresh the
+  `[hooks.state]` block with `scripts/codex-hook-hashes.sh`.
 
 ## Syncing the dotfiles to your own machine
 

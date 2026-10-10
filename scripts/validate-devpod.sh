@@ -72,6 +72,13 @@ echo "==> image PATH works for non-interactive shells"
 docker run --rm "$image" sh -c 'mise --version && nix --version && devenv version' >/dev/null ||
   { echo "image ENV PATH is missing mise, nix or devenv for non-interactive shells" >&2; exit 1; }
 
+# The trust hashes pinned in .codex/config.toml go stale when a plugin changes a
+# hook, and codex then silently stops running it; catch that here.
+echo "==> codex plugin hooks are trusted"
+docker run --rm \
+  --volume "$(cd -- "$(dirname -- "$0")" && pwd)/codex-hook-hashes.sh:/tmp/codex-hook-hashes.sh:ro" \
+  "$image" bash /tmp/codex-hook-hashes.sh --check
+
 echo "==> devpod up (image: ${image})"
 devpod up "$workspace_dir" \
   --id "$workspace_id" \
