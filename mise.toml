@@ -15,6 +15,7 @@ run = [
   "bash scripts/tests/sync-dotfiles.test.sh",
   "bash scripts/tests/mise-bump.test.sh",
   "bash scripts/tests/post-create.test.sh",
+  "bash scripts/tests/install-codex-plugins.test.sh",
 ]
 
 [tasks.check]

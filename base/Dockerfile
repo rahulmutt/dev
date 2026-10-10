@@ -146,6 +146,12 @@ COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} ./.pi/ /home/${USERNAME}/.pi/
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 
+# ---- codex plugins ----
+# Fetch the plugins .codex/config.toml declares; the TOML alone leaves codex
+# with no marketplace snapshot. Not best effort: a missing plugin fails the build.
+RUN --mount=type=bind,source=scripts/install-codex-plugins.sh,target=/tmp/install-codex-plugins.sh \
+    bash /tmp/install-codex-plugins.sh
+
 # ---- tmux and nvim plugins ----
 # Best effort, as they were in post-create.sh.
 RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \

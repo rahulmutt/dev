@@ -63,6 +63,9 @@ step (baked into the image) only trusts and installs the workspace's own
   `codeburn`, `skills`, `vsync`, and `nono`.
 - **Dotfiles:** preconfigured `.claude`, `.codex`, `.config`, `.pi`, and
   `.tmux.conf`.
+- **Codex plugins:** superpowers, ponytail, devkit and impeccable, installed at build time
+  from `.codex/config.toml`. On first launch, open `/hooks` in codex and trust
+  ponytail's two hooks (again after it updates); until then only its skills run.
 
 ## Syncing the dotfiles to your own machine
 
@@ -92,6 +95,12 @@ Show what would change, modify nothing:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
+```
+
+Syncing `.codex/config.toml` only declares the Codex plugins. Fetch them with:
+
+```sh
+scripts/install-codex-plugins.sh
 ```
 
 Apply without the interactive prompt:
