@@ -8,6 +8,10 @@
 # workspace to exist: its own mise config.
 set -euo pipefail
 
+# DevPod's Kubernetes provider runs this via `su dev -c` from a root agent,
+# which can arrive without the image's ENV PATH (base/Dockerfile).
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+
 # --- legacy opt-ins ---
 for var in INSTALL_NIX INSTALL_DEVENV; do
   if [ -n "${!var:-}" ]; then
