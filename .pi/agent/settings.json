@@ -3,8 +3,14 @@
     "npm:@rahulmutt/pi-ralph",
     "npm:pi-web-access",
     "npm:pi-subagents",
-    "git:github.com/obra/superpowers", 
+    "git:github.com/obra/superpowers",
+    "git:github.com/DietrichGebert/ponytail",
     "git:github.com/rahulmutt/devkit",
-    "npm:@juicesharp/rpiv-ask-user-question"
-  ]
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:pi-hermes-memory",
+    "npm:pi-dynamic-workflows@1.0.1"
+  ],
+  "defaultTools": ["+codemode"],
+  "quietStartup": "header",
+  "collapseChangelog": true
 }

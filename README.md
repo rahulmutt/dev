@@ -168,13 +168,24 @@ pi's plugins are declared in `.pi/agent/settings.json`:
   "packages": [
     "npm:@rahulmutt/pi-ralph",
     "npm:pi-web-access",
-    "npm:pi-subagents"
+    "npm:pi-subagents",
+    "git:github.com/obra/superpowers",
+    "git:github.com/DietrichGebert/ponytail",
+    "git:github.com/rahulmutt/devkit",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:pi-hermes-memory",
+    "npm:pi-dynamic-workflows@1.0.1"
   ]
 }
 ```
 
-Add or remove entries there — pi installs any missing ones automatically on its
-next startup. No manual `pi install` step is needed.
+The image installs them at build time (`pi install` per entry), so a new
+container starts with them ready. To change the list, edit that file and
+rebuild, or just restart pi — it installs any missing entries on its next
+startup. No manual `pi install` step is needed.
+
+The same file also turns on pi's built-in `codemode` tool (`"defaultTools":
+["+codemode"]`), which lets the model script several tool calls in one step.
 
 ## Development
 
