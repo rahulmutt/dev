@@ -35,6 +35,11 @@ OFFICIAL_MARKETPLACE_REPO="anthropics/claude-plugins-official"
 # directory marketplace. Plugins from these are skipped by name.
 EXTERNAL_MARKETPLACES=(always-further)
 
+# Resolve claude now, while HOME is the real one. On PATH it is a mise shim,
+# which finds its version through $HOME/.config/mise, and the checks below
+# swap HOME for a scratch dir, so a bare `claude` there has no version set.
+CLAUDE_BIN="$(mise which claude 2>/dev/null || command -v claude || echo claude)"
+
 SCRATCH="$(mktemp -d)"
 trap 'rm -rf "$SCRATCH"' EXIT
 
@@ -75,7 +80,7 @@ check_pinned_paths() {
 claude_doctor() {
     local dir
     dir="$(mktemp -d -p "$SCRATCH")"
-    (cd "$dir" && HOME="$1" claude doctor </dev/null 2>&1) || true
+    (cd "$dir" && HOME="$1" "$CLAUDE_BIN" doctor </dev/null 2>&1) || true
 }
 
 # Claude validates settings against its own schema, for the version installed.
@@ -114,7 +119,7 @@ check_claude_plugins() {
     cp "$CLAUDE_SETTINGS" "$home/.claude/settings.json"
 
     for repo in "$OFFICIAL_MARKETPLACE_REPO" $(jq -r '.extraKnownMarketplaces // {} | .[] | .source | select(.source == "github") | .repo' "$CLAUDE_SETTINGS"); do
-        if out="$(cd "$home" && HOME="$home" claude plugin marketplace add "$repo" </dev/null 2>&1)"; then
+        if out="$(cd "$home" && HOME="$home" "$CLAUDE_BIN" plugin marketplace add "$repo" </dev/null 2>&1)"; then
             pass "claude marketplace $repo"
         else
             fail "claude marketplace $repo"
@@ -133,7 +138,7 @@ check_claude_plugins() {
             fail "claude plugin $id: marketplace $market is not declared in extraKnownMarketplaces"
             continue
         fi
-        if out="$(cd "$home" && HOME="$home" claude plugin install "$id" </dev/null 2>&1)"; then
+        if out="$(cd "$home" && HOME="$home" "$CLAUDE_BIN" plugin install "$id" </dev/null 2>&1)"; then
             pass "claude plugin $id"
         else
             fail "claude plugin $id"

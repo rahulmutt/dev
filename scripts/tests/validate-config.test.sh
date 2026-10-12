@@ -127,7 +127,7 @@ run_validate() {
     local home="$1"; shift
     : > "$WORK/calls"
     STATUS=0
-    OUT="$(env -i HOME="$home" PATH="$STUBS:$JQ_DIR:/usr/bin:/bin" CALLS="$WORK/calls" \
+    OUT="$(env -i HOME="$home" PATH="${SHIM_DIR:+$SHIM_DIR:}$STUBS:$JQ_DIR:/usr/bin:/bin" CALLS="$WORK/calls" \
         CODEX_HOOK_HASHES="$STUBS/hook-hashes" "$@" bash "$VALIDATE" 2>&1)" || STATUS=$?
     CALLS_OUT="$(cat "$WORK/calls")"
 }
@@ -140,6 +140,31 @@ run_validate "$H"
 assert_status 0 "a clean HOME passes"
 assert_contains "$OUT" "config OK" "reports success"
 assert_not_contains "$OUT" "FAIL" "no failing checks"
+
+# --- mise shim ----------------------------------------------------------------
+echo
+echo "test: claude is resolved before HOME is swapped (mise shim)"
+H="$WORK/shim"; make_home "$H"
+SHIM_DIR="$WORK/shim-bin"; mkdir -p "$SHIM_DIR"
+# The shim only works under the real HOME, like a mise shim reading
+# $HOME/.config/mise; `mise which claude` names the working stub.
+cat > "$SHIM_DIR/claude" <<EOF
+#!/bin/sh
+if [ "\$HOME" != "$H" ]; then
+    echo "mise ERROR No version is set for shim: claude"; exit 1
+fi
+exec "$STUBS/claude" "\$@"
+EOF
+cat > "$SHIM_DIR/mise" <<EOF
+#!/bin/sh
+[ "\$1 \$2" = "which claude" ] && echo "$STUBS/claude"
+EOF
+chmod +x "$SHIM_DIR/claude" "$SHIM_DIR/mise"
+run_validate "$H"
+assert_status 0 "passes with a HOME-sensitive claude shim"
+assert_contains "$OUT" "config OK" "reports success"
+assert_not_contains "$OUT" "No version is set" "never runs the shim under a swapped HOME"
+SHIM_DIR=
 
 # --- pinned-path drift ------------------------------------------------------
 echo
