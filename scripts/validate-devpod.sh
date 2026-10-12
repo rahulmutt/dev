@@ -72,12 +72,13 @@ echo "==> image PATH works for non-interactive shells"
 docker run --rm "$image" sh -c 'mise --version && nix --version && devenv version' >/dev/null ||
   { echo "image ENV PATH is missing mise, nix or devenv for non-interactive shells" >&2; exit 1; }
 
-# The trust hashes pinned in .codex/config.toml go stale when a plugin changes a
-# hook, and codex then silently stops running it; catch that here.
-echo "==> codex plugin hooks are trusted"
+# The baked-in dotfiles must be accepted by the tool versions baked in beside
+# them: settings schemas, plugins and packages that resolve, codex hook trust,
+# and no versioned mise install paths (scripts/validate-config.sh).
+echo "==> dotfiles are accepted by the installed tools"
 docker run --rm \
-  --volume "$(cd -- "$(dirname -- "$0")" && pwd)/codex-hook-hashes.sh:/tmp/codex-hook-hashes.sh:ro" \
-  "$image" bash /tmp/codex-hook-hashes.sh --check
+  --volume "$(cd -- "$(dirname -- "$0")" && pwd):/tmp/scripts:ro" \
+  "$image" bash /tmp/scripts/validate-config.sh
 
 echo "==> devpod up (image: ${image})"
 devpod up "$workspace_dir" \
@@ -131,26 +132,6 @@ sudo -n true 2>/dev/null && pass "passwordless sudo" || fail "passwordless sudo 
 # created by its bootstrap, so both exist even if the plugin install failed.
 [ -d "$HOME/.tmux/plugins/tmux-sensible" ] && pass "tmux plugins installed" || fail "tmux plugin tmux-sensible missing"
 [ -d "$HOME/.local/share/nvim/lazy/LazyVim" ] && pass "nvim plugins installed" || fail "nvim plugin LazyVim missing"
-
-codex_plugins="$(codex plugin list 2>&1 || true)"
-for p in superpowers@superpowers-dev ponytail@ponytail devkit@devkit-marketplace impeccable@impeccable; do
-  printf '%s\n' "$codex_plugins" | grep -E "^$p +installed, enabled" >/dev/null &&
-    pass "codex plugin $p installed" ||
-    fail "codex plugin $p not installed, enabled"
-done
-
-# `pi list` echoes settings.json, so check each declared package's install dir.
-# A pinned source ends in @<version> or @<ref>; the install dir doesn't.
-for src in $(jq -r '.packages[] | strings' "$HOME/.pi/agent/settings.json"); do
-  case "$src" in
-    npm:@*@*|npm:[!@]*@*) pkg="${src#npm:}"; dir="$HOME/.pi/agent/npm/node_modules/${pkg%@*}" ;;
-    npm:*) dir="$HOME/.pi/agent/npm/node_modules/${src#npm:}" ;;
-    git:*@*) repo="${src#git:}"; dir="$HOME/.pi/agent/git/${repo%@*}" ;;
-    git:*) dir="$HOME/.pi/agent/git/${src#git:}" ;;
-    *) fail "pi package $src has an unchecked source type"; continue ;;
-  esac
-  [ -d "$dir" ] && pass "pi package $src installed" || fail "pi package $src not installed at $dir"
-done
 
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"
