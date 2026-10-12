@@ -14,6 +14,7 @@ description = "Run the shell-script tests"
 run = [
   "bash scripts/tests/sync-dotfiles.test.sh",
   "bash scripts/tests/env-bump.test.sh",
+  "bash scripts/tests/validate-config.test.sh",
   "bash scripts/tests/post-create.test.sh",
   "bash scripts/tests/mise-update.test.sh",
   "bash scripts/tests/install-codex-plugins.test.sh",
