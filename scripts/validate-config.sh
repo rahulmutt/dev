@@ -25,6 +25,16 @@ CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="${CODEX_HOME:-$HOME/.codex}/config.toml"
 PI_SETTINGS="$HOME/.pi/agent/settings.json"
 
+# A fresh HOME has only the built-in Anthropic Directory, so the official
+# marketplace must be added before its plugins will install.
+OFFICIAL_MARKETPLACE="claude-plugins-official"
+OFFICIAL_MARKETPLACE_REPO="anthropics/claude-plugins-official"
+
+# Marketplaces another tool wires up locally, not installable from GitHub:
+# nono's packs (always-further/nono-packs) set up always-further as a local
+# directory marketplace. Plugins from these are skipped by name.
+EXTERNAL_MARKETPLACES=(always-further)
+
 SCRATCH="$(mktemp -d)"
 trap 'rm -rf "$SCRATCH"' EXIT
 
@@ -55,6 +65,79 @@ check_pinned_paths() {
             printf '%s\n' "$hits" | detail
         else
             pass "$(basename "$f"): no versioned mise install paths"
+        fi
+    done
+}
+
+# claude_doctor <home>: print `claude doctor` output for that HOME. Run from a
+# scratch dir so no project settings are mixed in. It exits 0 even when it
+# finds invalid settings, so callers match its output.
+claude_doctor() {
+    local dir
+    dir="$(mktemp -d -p "$SCRATCH")"
+    (cd "$dir" && HOME="$1" claude doctor </dev/null 2>&1) || true
+}
+
+# Claude validates settings against its own schema, for the version installed.
+# The canary guards the output match: if a claude bump rewords "Invalid
+# settings", the canary stops matching and this fails instead of passing
+# forever.
+check_claude_settings() {
+    local canary out
+    need "$CLAUDE_SETTINGS" || return
+
+    canary="$SCRATCH/claude-canary"
+    mkdir -p "$canary/.claude"
+    echo '{"permissions": {"defaultMode": "notAMode"}}' >"$canary/.claude/settings.json"
+    if ! claude_doctor "$canary" | grep -qF 'Invalid settings'; then
+        fail "claude doctor did not report a known-invalid settings file (detection broken)"
+        return
+    fi
+
+    out="$(claude_doctor "$HOME")"
+    if printf '%s\n' "$out" | grep -qF 'Invalid settings'; then
+        fail "claude rejects settings.json"
+        printf '%s\n' "$out" | sed -n '/Invalid settings/,/^$/p' | detail
+    else
+        pass "claude accepts settings.json"
+    fi
+}
+
+# Every enabled plugin installs, in a scratch HOME holding a copy of the
+# settings, so the real ~/.claude is never touched.
+check_claude_plugins() {
+    local home out repo id market declared
+    need "$CLAUDE_SETTINGS" || return
+
+    home="$SCRATCH/claude-plugins"
+    mkdir -p "$home/.claude"
+    cp "$CLAUDE_SETTINGS" "$home/.claude/settings.json"
+
+    for repo in "$OFFICIAL_MARKETPLACE_REPO" $(jq -r '.extraKnownMarketplaces // {} | .[] | .source | select(.source == "github") | .repo' "$CLAUDE_SETTINGS"); do
+        if out="$(cd "$home" && HOME="$home" claude plugin marketplace add "$repo" </dev/null 2>&1)"; then
+            pass "claude marketplace $repo"
+        else
+            fail "claude marketplace $repo"
+            printf '%s\n' "$out" | detail
+        fi
+    done
+
+    declared="$(jq -r '.extraKnownMarketplaces // {} | keys[]' "$CLAUDE_SETTINGS"; echo "$OFFICIAL_MARKETPLACE")"
+    for id in $(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true) | .key' "$CLAUDE_SETTINGS"); do
+        market="${id##*@}"
+        if printf '%s\n' "${EXTERNAL_MARKETPLACES[@]}" | grep -qxF "$market"; then
+            skip "claude plugin $id (marketplace $market is wired locally)"
+            continue
+        fi
+        if ! printf '%s\n' "$declared" | grep -qxF "$market"; then
+            fail "claude plugin $id: marketplace $market is not declared in extraKnownMarketplaces"
+            continue
+        fi
+        if out="$(cd "$home" && HOME="$home" claude plugin install "$id" </dev/null 2>&1)"; then
+            pass "claude plugin $id"
+        else
+            fail "claude plugin $id"
+            printf '%s\n' "$out" | detail
         fi
     done
 }
@@ -95,6 +178,9 @@ check_pi_packages() {
 main() {
     echo "==> pinned paths"
     check_pinned_paths
+    echo "==> claude"
+    check_claude_settings
+    check_claude_plugins
     echo "==> pi"
     check_pi_settings
     check_pi_packages

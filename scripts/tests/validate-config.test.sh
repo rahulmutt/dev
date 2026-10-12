@@ -129,7 +129,6 @@ run_validate() {
     STATUS=0
     OUT="$(env -i HOME="$home" PATH="$STUBS:$JQ_DIR:/usr/bin:/bin" CALLS="$WORK/calls" \
         CODEX_HOOK_HASHES="$STUBS/hook-hashes" "$@" bash "$VALIDATE" 2>&1)" || STATUS=$?
-    # shellcheck disable=SC2034  # read by the claude/codex call assertions in later tasks
     CALLS_OUT="$(cat "$WORK/calls")"
 }
 
@@ -189,6 +188,61 @@ rm "$H/.pi/agent/settings.json"
 run_validate "$H"
 assert_status 1 "exits 1"
 assert_contains "$OUT" "missing" "says the file is missing"
+
+# --- claude settings ----------------------------------------------------------
+echo
+echo "test: claude doctor reporting invalid settings fails"
+H="$WORK/claude-bad"; make_home "$H"
+jq '.permissions = {"defaultMode": "BADKEY"}' "$H/.claude/settings.json" > "$WORK/s.json" && mv "$WORK/s.json" "$H/.claude/settings.json"
+run_validate "$H"
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  claude rejects settings.json" "claude settings check fails"
+assert_contains "$OUT" "bad value" "prints the doctor's invalid-settings block"
+assert_not_contains "$OUT" "Other stuff" "stops at the end of that block"
+
+echo
+echo "test: a doctor that no longer reports the canary fails as detection broken"
+H="$WORK/blind"; make_home "$H"
+run_validate "$H" STUB_DOCTOR_BLIND=1
+assert_status 1 "exits 1"
+assert_contains "$OUT" "detection broken" "says detection is broken"
+
+# --- claude plugins -----------------------------------------------------------
+echo
+echo "test: claude plugins resolve in a scratch HOME"
+H="$WORK/clean"
+run_validate "$H"
+assert_contains "$CALLS_OUT" "claude plugin marketplace add anthropics/claude-plugins-official" "adds the official marketplace"
+assert_contains "$CALLS_OUT" "claude plugin marketplace add rahulmutt/devkit" "adds each declared marketplace"
+assert_contains "$CALLS_OUT" "claude plugin install devkit@devkit-marketplace" "installs an enabled plugin"
+assert_contains "$CALLS_OUT" "claude plugin install code-review@claude-plugins-official" "installs an official plugin"
+assert_not_contains "$CALLS_OUT" "off@devkit-marketplace" "skips a disabled plugin"
+assert_contains "$OUT" "skip  claude plugin nono@always-further" "skips the locally wired always-further marketplace"
+assert_not_contains "$CALLS_OUT" "install nono@always-further" "never tries to install it"
+
+echo
+echo "test: a plugin that fails to install fails"
+run_validate "$H" STUB_MISSING_PLUGIN=devkit@devkit-marketplace
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  claude plugin devkit@devkit-marketplace" "names the plugin"
+
+echo
+echo "test: a plugin from an undeclared marketplace fails"
+H="$WORK/undeclared"; make_home "$H"
+jq '.enabledPlugins["x@nowhere"] = true' "$H/.claude/settings.json" > "$WORK/s.json" && mv "$WORK/s.json" "$H/.claude/settings.json"
+run_validate "$H"
+assert_status 1 "exits 1"
+assert_contains "$OUT" "marketplace nowhere is not declared" "says the marketplace is undeclared"
+
+echo
+echo "test: a failing check doesn't stop later checks"
+H="$WORK/many"; make_home "$H"
+sed -i 's|installs/bun/latest|installs/bun/1.4.2|' "$H/.claude/settings.json"
+echo '{"packages": [3]}' > "$H/.pi/agent/settings.json"
+run_validate "$H"
+assert_contains "$OUT" "versioned mise install path" "first failure reported"
+assert_contains "$OUT" "FAIL  pi settings.json" "later failure still reported"
+assert_contains "$OUT" "2 check(s) failed" "both counted"
 
 echo
 echo "$PASS passed, $FAIL failed"
