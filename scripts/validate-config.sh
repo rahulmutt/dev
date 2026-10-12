@@ -142,6 +142,63 @@ check_claude_plugins() {
     done
 }
 
+# Codex validates config.toml as it loads it; `codex doctor --json` reports
+# that as checks["config.load"], with unrecognized keys as a warning. Its exit
+# status is 1 without a login, so only the report is used. A missing check or
+# unparseable report fails rather than passing silently.
+check_codex_config() {
+    local report status
+    need "$CODEX_CONFIG" || return
+    report="$(cd "$SCRATCH" && codex doctor --json </dev/null 2>/dev/null)"
+    status="$(jq -r '.checks["config.load"].status // "missing"' <<<"$report" 2>/dev/null)" || status=unparseable
+    if [ "$status" = ok ]; then
+        pass "codex accepts config.toml"
+    else
+        fail "codex config.load is $status"
+        jq -r '.checks["config.load"] // {} | .summary // empty, (.. | strings | select(test("unrecognized|ignored")))' \
+            <<<"$report" 2>/dev/null | sort -u | detail
+    fi
+}
+
+# Print each [plugins."<id>"] in $CODEX_CONFIG with enabled = true.
+codex_enabled_plugins() {
+    awk '
+        /^\[/ { id = "" }
+        /^\[plugins\."[^"]+"\]/ {
+            id = $0
+            sub(/^\[plugins\."/, "", id)
+            sub(/"\].*$/, "", id)
+        }
+        id != "" && /^enabled[ \t]*=[ \t]*true/ { print id }
+    ' "$CODEX_CONFIG"
+}
+
+check_codex_plugins() {
+    local list id
+    need "$CODEX_CONFIG" || return
+    list="$(cd "$SCRATCH" && codex plugin list 2>&1 || true)"
+    for id in $(codex_enabled_plugins); do
+        if printf '%s\n' "$list" | grep -E "^$id +installed, enabled" >/dev/null; then
+            pass "codex plugin $id installed"
+        else
+            fail "codex plugin $id not installed, enabled"
+        fi
+    done
+}
+
+# Pinned trust hashes go stale when a plugin changes a hook; codex then
+# silently stops running it. env-bump refreshes them daily.
+check_codex_hooks() {
+    local out
+    need "$CODEX_CONFIG" || return
+    if out="$(cd "$SCRATCH" && bash "$CODEX_HOOK_HASHES" --check 2>&1)"; then
+        pass "codex hook trust ($out)"
+    else
+        fail "codex hook trust"
+        printf '%s\n' "$out" | detail
+    fi
+}
+
 # pi has no validator of its own (`pi list` exits 0 on invalid JSON), so check
 # the shape this repo relies on: an object whose packages are strings.
 check_pi_settings() {
@@ -181,6 +238,10 @@ main() {
     echo "==> claude"
     check_claude_settings
     check_claude_plugins
+    echo "==> codex"
+    check_codex_config
+    check_codex_plugins
+    check_codex_hooks
     echo "==> pi"
     check_pi_settings
     check_pi_packages

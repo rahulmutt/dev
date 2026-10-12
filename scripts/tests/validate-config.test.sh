@@ -244,6 +244,41 @@ assert_contains "$OUT" "versioned mise install path" "first failure reported"
 assert_contains "$OUT" "FAIL  pi settings.json" "later failure still reported"
 assert_contains "$OUT" "2 check(s) failed" "both counted"
 
+# --- codex --------------------------------------------------------------------
+echo
+echo "test: a codex config.load warning fails"
+H="$WORK/clean"
+run_validate "$H" STUB_CODEX_STATUS=warning
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  codex config.load is warning" "names the status"
+assert_contains "$OUT" "unrecognized configuration setting" "prints codex's detail"
+
+echo
+echo "test: a codex report without config.load fails"
+run_validate "$H" STUB_CODEX_STATUS=missing
+assert_status 1 "exits 1"
+assert_contains "$OUT" "codex config.load is missing" "missing is a failure, not a pass"
+
+echo
+echo "test: unparseable codex doctor output fails"
+run_validate "$H" STUB_CODEX_STATUS=garbage
+assert_status 1 "exits 1"
+assert_contains "$OUT" "codex config.load is unparseable" "garbage is a failure"
+
+echo
+echo "test: an enabled codex plugin that isn't installed fails"
+run_validate "$H" STUB_CODEX_PLUGIN_GONE=1
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  codex plugin superpowers@superpowers-dev" "names the plugin"
+assert_not_contains "$OUT" "disabled@x" "ignores a disabled plugin"
+
+echo
+echo "test: stale codex hook trust fails"
+run_validate "$H" STUB_HOOKS_STALE=1
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  codex hook trust" "hook check fails"
+assert_contains "$CALLS_OUT" "hook-hashes --check" "runs the hook check"
+
 echo
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
