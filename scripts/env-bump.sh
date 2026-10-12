@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 #
-# Bump the pinned container toolchain in .config/mise/config.toml to the latest
-# available releases, and render a markdown summary of what moved.
+# Bump the environment: the pinned container toolchain in .config/mise/config.toml
+# and Codex hook trust in .codex/config.toml, and render a markdown summary.
 #
 # Usage:
-#   scripts/mise-bump.sh [--summary-out <file>]           # bump, then write the summary
-#   scripts/mise-bump.sh --summary <before> <after>       # render a summary only
-#   scripts/mise-bump.sh --partial-bump <mise-stderr>     # was the bump partial?
+#   scripts/env-bump.sh [--summary-out <file>]           # bump, then write the summary
+#   scripts/env-bump.sh --summary <before> <after>       # render a summary only
+#   scripts/env-bump.sh --partial-bump <mise-stderr>     # was the bump partial?
 #
 # The --summary and --partial-bump forms are pure functions -- over two config
 # files, and over a captured stderr log, respectively -- that run no mise and
-# touch no network, which is what scripts/tests/mise-bump.test.sh drives.
+# touch no network, which is what scripts/tests/env-bump.test.sh drives.
 #
-# Run daily by .github/workflows/mise-bump.yaml.
+# Run daily by .github/workflows/env-bump.yaml.
 
 set -euo pipefail
 
@@ -62,7 +62,7 @@ pins() {
 # warns on stderr, drops the tool from the plan, and happily bumps the rest
 # (verified empirically). Pure over the given file -- invokes no mise -- so
 # it is unit-testable offline via `--partial-bump <file>`
-# (scripts/tests/mise-bump.test.sh).
+# (scripts/tests/env-bump.test.sh).
 tool_resolution_failed() {
     grep -qF 'Failed to resolve tool version list' "$1"
 }
@@ -132,7 +132,7 @@ bump() {
     if ! mise upgrade --bump --yes --minimum-release-age 0s "${DEPENDENCY_TOOLS[@]}" 2>>"$stderr_log" ||
         ! mise upgrade --bump --yes --minimum-release-age 0s 2>>"$stderr_log"; then
         cat "$stderr_log" >&2
-        echo "mise-bump: mise upgrade exited nonzero" >&2
+        echo "env-bump: mise upgrade exited nonzero" >&2
         cp "$before" "$CONFIG"  # A failed run must leave no changes behind
         exit 1
     fi
@@ -143,8 +143,8 @@ bump() {
     # No summary is written below, so no PR is opened; this is meant to be a
     # noisy daily failure until a human removes or fixes the dead tool.
     if tool_resolution_failed "$stderr_log"; then
-        echo "mise-bump: mise failed to resolve one or more pinned tools (see stderr above)." >&2
-        echo "mise-bump: refusing to open a PR for a partial bump." >&2
+        echo "env-bump: mise failed to resolve one or more pinned tools (see stderr above)." >&2
+        echo "env-bump: refusing to open a PR for a partial bump." >&2
         cp "$before" "$CONFIG"  # Refusal must leave no changes behind
         exit 1
     fi

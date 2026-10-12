@@ -1,7 +1,8 @@
-name: Mise Bump
+name: Env Bump
 
 # Daily check for newer releases of the pinned container toolchain in
-# .config/mise/config.toml. If anything moved, open -- or refresh -- a single
+# .config/mise/config.toml, plus a refresh of the Codex hook trust pinned in
+# .codex/config.toml. If anything moved, open -- or refresh -- a single
 # rolling PR.
 #
 # The PR is deliberately opened with a PAT rather than the default GITHUB_TOKEN:
@@ -9,9 +10,9 @@ name: Mise Bump
 # and the entire point of the PR is that check.yaml -> devpod.yaml proves the new
 # pins still `mise install` on both architectures before a human merges.
 #
-# The `mise-bump` branch is machine-owned: every run rebuilds it from a fresh
+# The `env-bump` branch is machine-owned: every run rebuilds it from a fresh
 # checkout of `main` and force-pushes over whatever was there. Do NOT hand-edit
-# it -- a human commit pushed to `mise-bump` (say, dropping a pin that broke
+# it -- a human commit pushed to `env-bump` (say, dropping a pin that broke
 # CI) is destroyed without warning by tomorrow's run. To land a curated subset
 # of a day's bumps, edit and merge the PR the same day it's opened; otherwise
 # the next run reverts the edit.
@@ -33,7 +34,7 @@ permissions:
 # One bump at a time, so a manual run cannot race the nightly one onto the
 # same branch.
 concurrency:
-  group: mise-bump
+  group: env-bump
 
 jobs:
   bump:
@@ -69,12 +70,12 @@ jobs:
           install: false
           cache_key_prefix: mise-v2
 
-      - name: Bump pinned tool versions
+      - name: Bump the environment
         env:
           # The github: backend resolves releases through the API, which is
           # rate-limited when unauthenticated.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: scripts/mise-bump.sh --summary-out "${RUNNER_TEMP}/mise-bump-body.md"
+        run: scripts/env-bump.sh --summary-out "${RUNNER_TEMP}/env-bump-body.md"
 
       # No-ops when the bump changed nothing: no diff, no branch, no PR.
       # Rebuilt from a fresh checkout of main each run and force-pushed, so an
@@ -84,10 +85,12 @@ jobs:
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: ${{ secrets.MISE_BUMP_TOKEN }}
-          branch: mise-bump
+          branch: env-bump
           delete-branch: true
           labels: dependencies
-          add-paths: .config/mise/config.toml
-          commit-message: "chore(mise): bump pinned toolchain versions"
-          title: "chore(mise): bump pinned toolchain versions"
-          body-path: ${{ runner.temp }}/mise-bump-body.md
+          add-paths: |
+            .config/mise/config.toml
+            .codex/config.toml
+          commit-message: "chore(env): bump toolchain and refresh codex hook trust"
+          title: "chore(env): bump toolchain and refresh codex hook trust"
+          body-path: ${{ runner.temp }}/env-bump-body.md

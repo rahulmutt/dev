@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Tests for the summary renderer in scripts/mise-bump.sh.
+# Tests for scripts/env-bump.sh.
 #
 # The renderer is a pure function over two mise configs -- given the config
 # before and after a bump, it produces the markdown table that becomes the PR
@@ -13,7 +13,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
-BUMP="$REPO_ROOT/scripts/mise-bump.sh"
+BUMP="$REPO_ROOT/scripts/env-bump.sh"
 
 PASS=0
 FAIL=0
@@ -55,7 +55,7 @@ sed -e 's/^jq = .*/jq = "1.8.2"/' \
     -e 's|^"github:rahulmutt/vsync" = .*|"github:rahulmutt/vsync" = "0.6.1"|' \
     "$WORK/before.toml" > "$WORK/after.toml"
 
-echo "mise-bump summary renderer tests"
+echo "env-bump tests"
 
 # ===========================================================================
 echo
