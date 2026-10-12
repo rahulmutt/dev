@@ -66,8 +66,9 @@ step (baked into the image) only trusts and installs the workspace's own
 - **Codex plugins:** superpowers, ponytail, devkit and impeccable, installed at build time
   from `.codex/config.toml`, with their hooks pre-trusted there (no `/hooks`
   step). When a plugin changes a hook, its pinned hash goes stale and codex
-  stops running it; CI's devpod check catches this. Refresh the
-  `[hooks.state]` block with `scripts/codex-hook-hashes.sh`.
+  stops running it; the daily env-bump PR refreshes the `[hooks.state]` block,
+  and CI's devpod check fails on a stale one. To refresh by hand, paste the
+  output of `scripts/codex-hook-hashes.sh`.
 
 ## Syncing the dotfiles to your own machine
 
@@ -159,6 +160,11 @@ and nono). The build also accepts an optional GitHub token, since mise makes
 about 26 GitHub API calls and the unauthenticated limit is 60 per hour:
 `docker build --secret id=github_token,env=GITHUB_TOKEN …`.
 
+A daily workflow (`.github/workflows/env-bump.yaml`, running
+`scripts/env-bump.sh`) bumps every pin to its latest release and re-trusts
+the Codex plugin hooks, then opens or refreshes a single `env-bump` PR whose
+devpod checks prove the result still installs and validates.
+
 Inside a container, `mise-update [command…]` runs `mise self-update` and
 `mise upgrade --interactive --bump`, then execs the command if one is given
 (e.g. `mise-update claude`). A failed or cancelled update only warns. `--bump`
@@ -218,6 +224,12 @@ image — then asserts the container is usable: the `dev` user with passwordless
 sudo, the workspace source at `/workspace`, tmux and nvim plugins installed,
 Nix and devenv working, and every tool in `.config/mise/config.toml` actually
 executing (not merely resolving to a mise shim).
+
+It also runs `scripts/validate-config.sh` in the image, which checks the
+baked-in Claude, Codex and pi dotfiles against the installed tools: each
+tool accepts its settings (`claude doctor`, `codex doctor`), every declared
+plugin and package resolves, Codex hook trust is current, and no settings
+file names a versioned mise install path (use `installs/<tool>/latest/`).
 
 CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
 once per architecture (`amd64`, `arm64`): on pull requests, and on
