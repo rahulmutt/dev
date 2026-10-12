@@ -186,16 +186,54 @@ usage() {
 # than a fall-through to PATH. Bumping node alone first rewrites its pin and
 # installs the new version, so the second pass sees a dependency that is both
 # current and present.
+# Write the current [hooks.state] block for the plugins in $CODEX_CONFIG to
+# <block>. Installs the plugins into a scratch CODEX_HOME, so neither the
+# runner's codex state nor this repo's config is touched. codex comes from
+# the toolchain pins: the workflow runs mise-action with install: false, so it
+# is only present if the mise bump just moved it -- hence the explicit install.
+# Run from the scratch home so codex doesn't also load this repo's
+# .codex/config.toml as project config.
+refresh_codex_hooks() {
+    local block="$1" codex_home codex_bin status=0
+
+    codex_home="$(mktemp -d)"
+    cp "$CODEX_CONFIG" "$codex_home/config.toml"
+
+    if mise install codex && codex_bin="$(mise which codex)"; then
+        (
+            cd "$codex_home"
+            export CODEX_HOME="$codex_home"
+            PATH="$(dirname "$codex_bin"):$PATH"
+            bash "$SCRIPT_DIR/install-codex-plugins.sh" >&2 &&
+                bash "$SCRIPT_DIR/codex-hook-hashes.sh" >"$block"
+        ) || status=$?
+    else
+        status=1
+    fi
+
+    rm -rf "$codex_home"
+    return "$status"
+}
+
 bump() {
-    local summary_out="$1" before stderr_log summary
+    local summary_out="$1" before codex_before stderr_log block summary hooks
 
     cd "$REPO_ROOT"
 
     before="$(mktemp)"
+    codex_before="$(mktemp)"
     stderr_log="$(mktemp)"
-    # shellcheck disable=SC2064  # expand now: both vars are gone by trap time otherwise
-    trap "rm -f '$before' '$stderr_log'" EXIT
+    block="$(mktemp)"
+    # shellcheck disable=SC2064  # expand now: the vars are gone by trap time otherwise
+    trap "rm -f '$before' '$codex_before' '$stderr_log' '$block'" EXIT
     cp "$CONFIG" "$before"
+    cp "$CODEX_CONFIG" "$codex_before"
+
+    # A failed run must leave no changes behind, in either file.
+    restore() {
+        cp "$before" "$CONFIG"
+        cp "$codex_before" "$CODEX_CONFIG"
+    }
 
     # A fresh CI runner has never trusted this config, and mise treats an
     # untrusted config as a hard error, not a silent skip.
@@ -211,7 +249,7 @@ bump() {
         ! mise upgrade --bump --yes --minimum-release-age 0s 2>>"$stderr_log"; then
         cat "$stderr_log" >&2
         echo "env-bump: mise upgrade exited nonzero" >&2
-        cp "$before" "$CONFIG"  # A failed run must leave no changes behind
+        restore
         exit 1
     fi
     cat "$stderr_log" >&2
@@ -223,11 +261,27 @@ bump() {
     if tool_resolution_failed "$stderr_log"; then
         echo "env-bump: mise failed to resolve one or more pinned tools (see stderr above)." >&2
         echo "env-bump: refusing to open a PR for a partial bump." >&2
-        cp "$before" "$CONFIG"  # Refusal must leave no changes behind
+        restore
         exit 1
     fi
 
+    # Re-trust the codex plugin hooks. Runs every day, not only when codex
+    # moved: plugins are installed from their marketplaces' default branches,
+    # so a hook can change upstream with no pin moving. Without the plugins
+    # installed there is no way to compute correct hashes, and stale ones
+    # would mislead, so a failure here also refuses the PR.
+    if ! refresh_codex_hooks "$block"; then
+        echo "env-bump: refreshing codex hook trust failed (see above)." >&2
+        restore
+        exit 1
+    fi
+    rewrite_hooks "$codex_before" "$block" >"$CODEX_CONFIG"
+
     summary="$(render_summary "$before" "$CONFIG")"
+    hooks="$(render_hooks_summary "$codex_before" "$CODEX_CONFIG")"
+    if [ -n "$hooks" ]; then
+        summary="$summary"$'\n\n'"$hooks"
+    fi
     printf '%s\n' "$summary"
     if [ -n "$summary_out" ]; then
         printf '%s\n' "$summary" > "$summary_out"
