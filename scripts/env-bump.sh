@@ -171,21 +171,6 @@ usage() {
     exit 2
 }
 
-# Bump every pin in $CONFIG to the latest available release.
-#
-# --minimum-release-age 0s takes releases the moment they land, rather than
-# waiting out any configured quarantine: this repo's safety net is the devpod
-# matrix that runs on the resulting PR, not a waiting period.
-#
-# The bump runs in two passes, dependencies first. The npm: tools declare
-# node as an install dependency, and mise resolves that dependency against
-# the config as it stands when the plan is built. In a single pass on a day
-# node moves, the plan installs the NEW node but the npm: tools still ask for
-# the OLD node -- which was never installed on a fresh runner (mise-action runs
-# with install: false) -- and since mise 2026.9.1 that is a hard error rather
-# than a fall-through to PATH. Bumping node alone first rewrites its pin and
-# installs the new version, so the second pass sees a dependency that is both
-# current and present.
 # Write the current [hooks.state] block for the plugins in $CODEX_CONFIG to
 # <block>. Installs the plugins into a scratch CODEX_HOME, so neither the
 # runner's codex state nor this repo's config is touched. codex comes from
@@ -215,8 +200,23 @@ refresh_codex_hooks() {
     return "$status"
 }
 
+# Bump every pin in $CONFIG to the latest available release.
+#
+# --minimum-release-age 0s takes releases the moment they land, rather than
+# waiting out any configured quarantine: this repo's safety net is the devpod
+# matrix that runs on the resulting PR, not a waiting period.
+#
+# The bump runs in two passes, dependencies first. The npm: tools declare
+# node as an install dependency, and mise resolves that dependency against
+# the config as it stands when the plan is built. In a single pass on a day
+# node moves, the plan installs the NEW node but the npm: tools still ask for
+# the OLD node -- which was never installed on a fresh runner (mise-action runs
+# with install: false) -- and since mise 2026.9.1 that is a hard error rather
+# than a fall-through to PATH. Bumping node alone first rewrites its pin and
+# installs the new version, so the second pass sees a dependency that is both
+# current and present.
 bump() {
-    local summary_out="$1" before codex_before stderr_log block summary hooks
+    local summary_out="$1" before codex_before stderr_log block rewritten summary hooks
 
     cd "$REPO_ROOT"
 
@@ -224,8 +224,9 @@ bump() {
     codex_before="$(mktemp)"
     stderr_log="$(mktemp)"
     block="$(mktemp)"
+    rewritten="$(mktemp)"
     # shellcheck disable=SC2064  # expand now: the vars are gone by trap time otherwise
-    trap "rm -f '$before' '$codex_before' '$stderr_log' '$block'" EXIT
+    trap "rm -f '$before' '$codex_before' '$stderr_log' '$block' '$rewritten'" EXIT
     cp "$CONFIG" "$before"
     cp "$CODEX_CONFIG" "$codex_before"
 
@@ -275,10 +276,23 @@ bump() {
         restore
         exit 1
     fi
-    rewrite_hooks "$codex_before" "$block" >"$CODEX_CONFIG"
+    # Build everything in temp files and command substitutions first, and
+    # touch $CODEX_CONFIG only once the rewrite has succeeded. Any failure from
+    # here on restores both files and refuses the PR.
+    if ! rewrite_hooks "$codex_before" "$block" >"$rewritten"; then
+        echo "env-bump: rewriting codex hook trust failed." >&2
+        restore
+        exit 1
+    fi
+    # cp, not mv: keep the file's mode rather than mktemp's 0600.
+    cp "$rewritten" "$CODEX_CONFIG" || { restore; exit 1; }
 
-    summary="$(render_summary "$before" "$CONFIG")"
-    hooks="$(render_hooks_summary "$codex_before" "$CODEX_CONFIG")"
+    if ! summary="$(render_summary "$before" "$CONFIG")" ||
+        ! hooks="$(render_hooks_summary "$codex_before" "$CODEX_CONFIG")"; then
+        echo "env-bump: rendering the summary failed." >&2
+        restore
+        exit 1
+    fi
     if [ -n "$hooks" ]; then
         summary="$summary"$'\n\n'"$hooks"
     fi
