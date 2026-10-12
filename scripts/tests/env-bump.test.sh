@@ -119,6 +119,98 @@ else
 fi
 
 # ===========================================================================
+# Codex hook trust. A config shaped like the real .codex/config.toml: settings,
+# a plugin table, then the [hooks.state] tables at the end.
+cat > "$WORK/codex-before.toml" <<'EOF'
+model = "gpt-5.5"
+
+[plugins."a@m"]
+enabled = true
+
+[hooks.state."a@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:aaa"
+
+[hooks.state."b@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:bbb"
+EOF
+
+# b changed, a removed, c added.
+cat > "$WORK/block.toml" <<'EOF'
+[hooks.state."b@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:BBB"
+
+[hooks.state."c@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:ccc"
+EOF
+
+echo
+echo "test: --rewrite-hooks replaces every hooks table with the block"
+OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/codex-before.toml" "$WORK/block.toml")"
+EXPECTED='model = "gpt-5.5"
+
+[plugins."a@m"]
+enabled = true
+
+[hooks.state."b@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:BBB"
+
+[hooks.state."c@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:ccc"'
+if [ "$OUT" = "$EXPECTED" ]; then ok "hooks tables replaced, other tables kept"; else bad "hooks tables replaced, other tables kept (got: $OUT)"; fi
+bash "$BUMP" --rewrite-hooks "$WORK/codex-before.toml" "$WORK/block.toml" > "$WORK/rewritten.toml"
+if [ "$(tail -c1 "$WORK/rewritten.toml" | od -An -c | tr -d ' ')" = '\n' ]; then ok "output ends with a newline"; else bad "output ends with a newline"; fi
+
+echo
+echo "test: --rewrite-hooks keeps a non-hook table that follows the hooks tables"
+{ cat "$WORK/codex-before.toml"; printf '\n[plugins."z@m"]\nenabled = true\n'; } > "$WORK/codex-trailing.toml"
+OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/codex-trailing.toml" "$WORK/block.toml")"
+assert_contains "$OUT" "$(printf '[plugins."z@m"]\nenabled = true')" "trailing plugin table survives"
+assert_not_contains "$OUT" 'sha256:aaa' "old hook pins are gone"
+
+echo
+echo "test: --rewrite-hooks with an empty block drops the hooks tables"
+: > "$WORK/empty-block.toml"
+OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/codex-before.toml" "$WORK/empty-block.toml")"
+assert_not_contains "$OUT" 'hooks.state' "no hooks tables remain"
+assert_contains "$OUT" '[plugins."a@m"]' "plugin table kept"
+
+echo
+echo "test: --rewrite-hooks round-trips the real config byte for byte"
+# The daily run regenerates the same block when nothing changed upstream; any
+# byte difference would open a whitespace-only PR every day.
+REAL="$REPO_ROOT/.codex/config.toml"
+awk '/^\[hooks\.state\./ { on = 1 } on' "$REAL" > "$WORK/real-block.toml"
+if bash "$BUMP" --rewrite-hooks "$REAL" "$WORK/real-block.toml" | cmp -s - "$REAL"; then
+    ok "unchanged hooks rewrite to an identical file"
+else
+    bad "unchanged hooks rewrite to an identical file"
+fi
+
+echo
+echo "test: --hooks-summary lists added, changed and removed hooks"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/codex-before.toml" "$WORK/rewritten.toml")"
+assert_contains "$OUT" '### Codex hook trust' "section heading"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- removed `a@m:hooks.json:stop:0:0`' "removed hook"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- changed `b@m:hooks.json:stop:0:0`' "changed hook"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- added `c@m:hooks.json:stop:0:0`' "added hook"
+
+echo
+echo "test: --hooks-summary with no hooks before lists every hook as added"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/before.toml" "$WORK/rewritten.toml")"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- added `b@m:hooks.json:stop:0:0`' "b added"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- added `c@m:hooks.json:stop:0:0`' "c added"
+
+echo
+echo "test: --hooks-summary prints nothing when no hook changed"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/codex-before.toml" "$WORK/codex-before.toml")"
+if [ -z "$OUT" ]; then ok "empty output"; else bad "empty output (got: $OUT)"; fi
+
+# ===========================================================================
 echo
 if [ "$FAIL" -eq 0 ]; then
     printf '\033[32mAll %d checks passed.\033[0m\n' "$PASS"

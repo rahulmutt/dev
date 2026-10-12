@@ -7,6 +7,8 @@
 #   scripts/env-bump.sh [--summary-out <file>]           # bump, then write the summary
 #   scripts/env-bump.sh --summary <before> <after>       # render a summary only
 #   scripts/env-bump.sh --partial-bump <mise-stderr>     # was the bump partial?
+#   scripts/env-bump.sh --rewrite-hooks <config> <block>  # replace codex hook trust tables
+#   scripts/env-bump.sh --hooks-summary <before> <after>  # render the hook trust changes
 #
 # The --summary and --partial-bump forms are pure functions -- over two config
 # files, and over a captured stderr log, respectively -- that run no mise and
@@ -27,6 +29,10 @@ CONFIG=".config/mise/config.toml"
 # repo's root mise.toml and would bump the dev tooling (shellcheck) into the same
 # PR. This is the same lever check.yaml pulls, pointed the other way.
 export MISE_OVERRIDE_CONFIG_FILENAMES="$CONFIG"
+
+# Codex config whose [hooks.state] tables pin the trusted hash of each plugin
+# hook. Only those tables are rewritten; the rest of the file is left alone.
+CODEX_CONFIG=".codex/config.toml"
 
 # --bump keeps each entry's existing precision, and every entry is already an
 # exact three-part version, so bumped entries stay exactly pinned. `mise upgrade`
@@ -88,8 +94,76 @@ render_summary() {
     echo "$rows"
 }
 
+# Print <config> with every [hooks.state."…"] table removed and trailing blank
+# lines trimmed, then -- if <block> is non-empty -- a blank line and <block>.
+# Pure over the two files.
+rewrite_hooks() {
+    awk '
+        /^\[hooks\.state\./ { skip = 1; next }
+        /^\[/ { skip = 0 }
+        skip { next }
+        { lines[++n] = $0 }
+        END {
+            while (n > 0 && lines[n] == "") n--
+            for (i = 1; i <= n; i++) print lines[i]
+        }
+    ' "$1"
+    if [ -s "$2" ]; then
+        echo
+        cat "$2"
+    fi
+}
+
+# Emit "<hook key><TAB><trusted hash>" for every [hooks.state] table.
+hook_pins() {
+    awk '
+        /^\[hooks\.state\."/ {
+            key = $0
+            sub(/^\[hooks\.state\."/, "", key)
+            sub(/"\][[:space:]]*$/, "", key)
+            next
+        }
+        /^\[/ { key = "" }
+        key != "" && /^trusted_hash[[:space:]]*=/ {
+            hash = $0
+            sub(/^[^"]*"/, "", hash)
+            sub(/".*$/, "", hash)
+            print key "\t" hash
+            key = ""
+        }
+    ' "$1"
+}
+
+# Markdown list of hooks added, changed or removed between two configs, or
+# nothing when the trusted set is unchanged. FILENAME == ARGV[1] rather than
+# NR == FNR, so an empty before-config is not mistaken for the after-config.
+render_hooks_summary() {
+    local rows
+    rows="$(awk -F'\t' '
+        FILENAME == ARGV[1] { before[$1] = $2; next }
+        { after[$1] = $2 }
+        END {
+            for (k in after) {
+                if (!(k in before)) print "added\t" k
+                else if (before[k] != after[k]) print "changed\t" k
+            }
+            for (k in before) if (!(k in after)) print "removed\t" k
+        }
+    ' <(hook_pins "$1") <(hook_pins "$2") |
+        sort -t"$TAB" -k2,2 |
+        awk -F'\t' '{ printf "- %s `%s`\n", $1, $2 }')"
+
+    [ -n "$rows" ] || return 0
+
+    echo "### Codex hook trust"
+    echo
+    echo "Re-trusted with \`scripts/codex-hook-hashes.sh\` after installing the plugins declared in \`$CODEX_CONFIG\`:"
+    echo
+    echo "$rows"
+}
+
 usage() {
-    echo "usage: $0 [--summary-out <file>] | --summary <before> <after> | --partial-bump <stderr-file>" >&2
+    echo "usage: $0 [--summary-out <file>] | --summary <before> <after> | --partial-bump <stderr-file> | --rewrite-hooks <config> <block> | --hooks-summary <before> <after>" >&2
     exit 2
 }
 
@@ -172,6 +246,16 @@ main() {
             else
                 return 1
             fi
+            ;;
+        --rewrite-hooks)
+            [ "$#" -eq 3 ] || usage
+            rewrite_hooks "$2" "$3"
+            return 0
+            ;;
+        --hooks-summary)
+            [ "$#" -eq 3 ] || usage
+            render_hooks_summary "$2" "$3"
+            return 0
             ;;
     esac
 
