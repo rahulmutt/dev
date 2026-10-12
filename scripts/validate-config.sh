@@ -61,10 +61,10 @@ check_pinned_paths() {
         need "$f" || continue
         hits="$(grep -noE 'mise/installs/[^/"]+/[0-9][^/" ]*' "$f" || true)"
         if [ -n "$hits" ]; then
-            fail "$(basename "$f") names a versioned mise install path; use installs/<tool>/latest/"
+            fail "${f#"$HOME"/} names a versioned mise install path; use installs/<tool>/latest/"
             printf '%s\n' "$hits" | detail
         else
-            pass "$(basename "$f"): no versioned mise install paths"
+            pass "${f#"$HOME"/}: no versioned mise install paths"
         fi
     done
 }

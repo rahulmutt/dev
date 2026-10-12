@@ -80,7 +80,7 @@ render_summary() {
     rows="$(join -t"$TAB" -j 1 \
         <(pins "$before" | sort -t"$TAB" -k1,1) \
         <(pins "$after" | sort -t"$TAB" -k1,1) |
-        awk -F'\t' '$2 != $3 { printf "| `%s` | `%s` | `%s` |\n", $1, $2, $3 }')"
+        awk -F'\t' '$2 != $3 { printf "| `%s` | `%s` | `%s` |\n", $1, $2, $3 }')" || return 1
 
     if [ -z "$rows" ]; then
         echo "No tool updates available."
@@ -155,7 +155,7 @@ render_hooks_summary() {
         }
     ' |
         sort -t"$TAB" -k2,2 |
-        awk -F'\t' '{ printf "- %s `%s`\n", $1, $2 }')"
+        awk -F'\t' '{ printf "- %s `%s`\n", $1, $2 }')" || return 1
 
     [ -n "$rows" ] || return 0
 

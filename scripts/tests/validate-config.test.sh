@@ -149,6 +149,7 @@ sed -i 's|installs/bun/latest|installs/bun/1.4.2|' "$H/.claude/settings.json"
 run_validate "$H"
 assert_status 1 "exits 1"
 assert_contains "$OUT" "installs/bun/1.4.2" "names the offending path"
+assert_contains "$OUT" "FAIL  .claude/settings.json" "labels the file relative to HOME"
 
 echo
 echo "test: a major-version symlink path also fails"

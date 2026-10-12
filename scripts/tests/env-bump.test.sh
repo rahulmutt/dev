@@ -168,6 +168,14 @@ assert_contains "$OUT" "$(printf '[plugins."z@m"]\nenabled = true')" "trailing p
 assert_not_contains "$OUT" 'sha256:aaa' "old hook pins are gone"
 
 echo
+echo "test: --rewrite-hooks handles a config with no hooks tables"
+OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/before.toml" "$WORK/block.toml")"
+EXPECTED="$(cat "$WORK/before.toml")
+
+$(cat "$WORK/block.toml")"
+if [ "$OUT" = "$EXPECTED" ]; then ok "block appended after one blank line"; else bad "block appended after one blank line (got: $OUT)"; fi
+
+echo
 echo "test: --rewrite-hooks with an empty block drops the hooks tables"
 : > "$WORK/empty-block.toml"
 OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/codex-before.toml" "$WORK/empty-block.toml")"
