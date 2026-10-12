@@ -135,13 +135,17 @@ hook_pins() {
 }
 
 # Markdown list of hooks added, changed or removed between two configs, or
-# nothing when the trusted set is unchanged. FILENAME == ARGV[1] rather than
-# NR == FNR, so an empty before-config is not mistaken for the after-config.
+# nothing when the trusted set is unchanged. Each side is tagged in the stream
+# ("before"/"after") rather than told apart by file identity, so an empty
+# before-config needs no special case and no /dev/fd path is involved.
 render_hooks_summary() {
     local rows
-    rows="$(awk -F'\t' '
-        FILENAME == ARGV[1] { before[$1] = $2; next }
-        { after[$1] = $2 }
+    rows="$({
+        hook_pins "$1" | awk -F'\t' '{ print "before\t" $0 }'
+        hook_pins "$2" | awk -F'\t' '{ print "after\t" $0 }'
+    } | awk -F'\t' '
+        $1 == "before" { before[$2] = $3; next }
+        { after[$2] = $3 }
         END {
             for (k in after) {
                 if (!(k in before)) print "added\t" k
@@ -149,7 +153,7 @@ render_hooks_summary() {
             }
             for (k in before) if (!(k in after)) print "removed\t" k
         }
-    ' <(hook_pins "$1") <(hook_pins "$2") |
+    ' |
         sort -t"$TAB" -k2,2 |
         awk -F'\t' '{ printf "- %s `%s`\n", $1, $2 }')"
 

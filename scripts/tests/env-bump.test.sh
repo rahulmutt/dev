@@ -206,6 +206,16 @@ assert_contains "$OUT" '- added `b@m:hooks.json:stop:0:0`' "b added"
 assert_contains "$OUT" '- added `c@m:hooks.json:stop:0:0`' "c added"
 
 echo
+echo "test: --hooks-summary with a zero-byte before file lists every hook as added"
+: > "$WORK/empty-before.toml"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/empty-before.toml" "$WORK/rewritten.toml")"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- added `b@m:hooks.json:stop:0:0`' "b added from empty file"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- added `c@m:hooks.json:stop:0:0`' "c added from empty file"
+assert_not_contains "$OUT" 'removed' "nothing removed"
+
+echo
 echo "test: --hooks-summary prints nothing when no hook changed"
 OUT="$(bash "$BUMP" --hooks-summary "$WORK/codex-before.toml" "$WORK/codex-before.toml")"
 if [ -z "$OUT" ]; then ok "empty output"; else bad "empty output (got: $OUT)"; fi
