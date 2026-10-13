@@ -21,11 +21,11 @@ bat = "0.26.1"
 ttyd = "1.7.7"
 ast-grep = "0.50.0"
 
-"npm:@earendil-works/pi-coding-agent" = "1.1.0"
+"npm:@earendil-works/pi-coding-agent" = "1.2.0"
 "npm:codeburn" = "0.9.27"
 "npm:skills" = "1.7.2"
 "github:rahulmutt/vsync" = "0.6.1"
-"github:always-further/nono" = "0.79.0"
+"github:always-further/nono" = "0.80.0"
 
 [settings]
 # Install Python only from precompiled (python-build-standalone) builds. The
