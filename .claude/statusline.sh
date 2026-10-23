@@ -23,6 +23,17 @@ plugin_dir="$(
 )"
 [ -n "$plugin_dir" ] || exit 0  # claude-hud not installed: show no status line
 
+# Refresh the usage snapshot claude-hud reads for the per-model weekly windows
+# (usage-snapshot.sh) once it is over 2 minutes old. Detached, with its output
+# closed, so the status line never waits on the network; flock keeps renders
+# from stacking up refreshes.
+snapshot="${XDG_CACHE_HOME:-$HOME/.cache}/claude-hud/usage.json"
+refresh="$(dirname -- "${BASH_SOURCE[0]}")/usage-snapshot.sh"
+if [ -f "$refresh" ] && [ -z "$(find "$snapshot" -mmin -2 2>/dev/null)" ]; then
+    mkdir -p "$(dirname "$snapshot")"
+    setsid flock -n "$snapshot.lock" bash "$refresh" "$snapshot" </dev/null >/dev/null 2>&1 &
+fi
+
 # bun by its mise `latest` symlink, not the shim: the shim resolves the version
 # from the current project's mise config, which may not pin bun at all.
 # --env-file /dev/null keeps bun from loading the project's .env files.

@@ -4,6 +4,11 @@
     "showAgents": true,
     "showTodos": true,
     "showDuration": true,
-    "showConfigCounts": true
+    "showConfigCounts": true,
+    "showCacheHitRate": true,
+    "showPromptCache": true,
+    "sevenDayThreshold": 0,
+    "showModelScopedUsage": true,
+    "externalUsagePath": "~/.cache/claude-hud/usage.json"
   }
 }

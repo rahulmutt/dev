@@ -19,6 +19,7 @@ run = [
   "bash scripts/tests/mise-update.test.sh",
   "bash scripts/tests/install-codex-plugins.test.sh",
   "bash scripts/tests/install-claude-plugins.test.sh",
+  "bash scripts/tests/usage-snapshot.test.sh",
   "bash scripts/tests/codex-hook-hashes.test.sh",
 ]
 

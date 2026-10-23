@@ -76,6 +76,17 @@ step (baked into the image) only trusts and installs the workspace's own
   GitHub marketplaces, which is all of the above, still install and update. LSP plugin recommendations are off via
   `lspRecommendationDisabled` in `~/.claude.json`, which the image sets — it is
   global config, not a dotfile, so syncing the dotfiles doesn't carry it.
+- **Claude status line:** claude-hud, via `.claude/statusline.sh`, showing
+  context use, prompt-cache hit rate and expiry, and the 5-hour, weekly and
+  per-model weekly (e.g. Fable) plan limits. Claude only passes the status line
+  the first two windows, so `.claude/usage-snapshot.sh` reads the rest from the
+  claude.ai usage endpoint with your existing login and writes
+  `~/.cache/claude-hud/usage.json`; the status line refreshes it in the
+  background when it is over 2 minutes old. That endpoint is undocumented, so
+  if it changes the per-model windows just disappear. It needs a file-based
+  login (`~/.claude/.credentials.json`), so it does nothing on macOS. Because
+  this repo's `.claude/settings.json` is also project settings when you run
+  Claude in a checkout, sync the dotfiles first or the status line is blank.
 - **Codex plugins:** superpowers, ponytail, devkit and impeccable, installed at build time
   from `.codex/config.toml`, with their hooks pre-trusted there (no `/hooks`
   step). When a plugin changes a hook, its pinned hash goes stale and codex
