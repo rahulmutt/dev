@@ -16,12 +16,22 @@
 # back byte for byte afterwards. Safe to re-run (e.g. after
 # scripts/sync-dotfiles.sh).
 #
+# With --update, also refreshes each marketplace and updates every installed
+# plugin to its latest version.
+#
 # Usage:
-#   scripts/install-claude-plugins.sh
+#   scripts/install-claude-plugins.sh [--update]
 #
 # Reads $CLAUDE_CONFIG_DIR/settings.json (default: ~/.claude/settings.json).
 
 set -euo pipefail
+
+update=0
+case "${1:-}" in
+    --update) update=1 ;;
+    "") ;;
+    *) echo "install-claude-plugins: unknown argument: $1" >&2; exit 2 ;;
+esac
 
 settings="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 
@@ -39,6 +49,9 @@ declared="$(jq -r '.extraKnownMarketplaces // {} | keys[]' "$saved")"
 for repo in $(jq -r '.extraKnownMarketplaces // {} | .[] | .source | select(.source == "github") | .repo' "$saved"); do
     claude plugin marketplace add "$repo" </dev/null
 done
+if [ "$update" -eq 1 ]; then
+    claude plugin marketplace update </dev/null
+fi
 
 for id in $(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true) | .key' "$saved"); do
     if ! printf '%s\n' "$declared" | grep -qxF "${id##*@}"; then
@@ -46,4 +59,7 @@ for id in $(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true)
         continue
     fi
     claude plugin install "$id" </dev/null
+    if [ "$update" -eq 1 ]; then
+        claude plugin update "$id" </dev/null
+    fi
 done

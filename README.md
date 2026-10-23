@@ -124,12 +124,14 @@ Show what would change, modify nothing:
 curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
 ```
 
-Syncing `.claude/settings.json` and `.codex/config.toml` only declares the
-Claude and Codex plugins. Fetch them with:
+Syncing `.claude/settings.json`, `.codex/config.toml` and
+`.pi/agent/settings.json` only declares the plugins. Fetch them (add
+`--update` to also update installed ones) with:
 
 ```sh
 scripts/install-claude-plugins.sh
 scripts/install-codex-plugins.sh
+scripts/install-pi-packages.sh
 ```
 
 Apply without the interactive prompt:
@@ -191,17 +193,27 @@ A daily workflow (`.github/workflows/env-bump.yaml`, running
 the Codex plugin hooks, then opens or refreshes a single `env-bump` PR whose
 devpod checks prove the result still installs and validates.
 
-Inside a container, `env-update [command…]` runs `mise self-update`, syncs
-the dotfiles from the latest `main` (the one-line installer, which shows each
-change and asks before applying it), then `mise upgrade --interactive --bump`,
-and execs the command if one is given (e.g. `env-update claude`). The sync runs
-before the upgrade because it replaces `~/.config/mise/config.toml` with the
-repo's pins; the upgrade then bumps anything newer on top. A failed or
-cancelled step only warns. `--bump` rewrites the container's copy of the
-config, not this repo's, and `self-update` moves mise past the image's pinned
-version for that container. The sync doesn't install newly declared Claude or
-Codex plugins; run `scripts/install-claude-plugins.sh` or
-`scripts/install-codex-plugins.sh` from a checkout for that.
+Inside a container, `env-update [command…]` brings the whole environment up
+to date, then execs the command if one is given (e.g. `env-update claude`):
+
+1. `mise self-update`.
+2. Syncs the dotfiles from a fresh clone of `main` (`sync-dotfiles.sh`, which
+   shows each change and asks before applying it).
+3. `mise upgrade --interactive --bump`.
+4. Installs and updates the plugins the dotfiles declare, for each of Claude,
+   Codex and pi that is installed (`scripts/install-claude-plugins.sh`,
+   `install-codex-plugins.sh` and `install-pi-packages.sh`, each with
+   `--update`; pinned pi packages stay put).
+5. Checks Codex hook trust: a plugin updated past the version `main` pinned
+   trust for can leave a hook untrusted, which codex silently skips. It says
+   how to re-trust if so.
+
+The sync runs before the upgrade because it replaces
+`~/.config/mise/config.toml` with the repo's pins; the upgrade then bumps
+anything newer on top. Steps 2–5 run from the clone, so they use the current
+scripts rather than the image's. A failed or cancelled step only warns.
+`--bump` rewrites the container's copy of the config, not this repo's, and
+`self-update` moves mise past the image's pinned version for that container.
 
 ### pi plugins
 

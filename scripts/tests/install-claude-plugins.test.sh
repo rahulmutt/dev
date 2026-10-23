@@ -56,7 +56,7 @@ run_install() {
     : > "$calls"
     STATUS=0
     env -i PATH="$STUBS:/usr/bin:/bin:$(dirname "$(command -v jq)")" CALLS="$calls" CLAUDE_CONFIG_DIR="$dir" "$@" \
-        bash "$INSTALL" >"$out" 2>"$err" || STATUS=$?
+        bash "$INSTALL" ${INSTALL_ARGS:+"$INSTALL_ARGS"} >"$out" 2>"$err" || STATUS=$?
     CALLS_OUT="$(cat "$calls")"
     STDOUT_OUT="$(cat "$out")"
     STDERR_OUT="$(cat "$err")"
@@ -97,6 +97,21 @@ claude plugin install one@alpha
 claude plugin install two@beta" "adds every marketplace, then every enabled plugin"
 assert_contains "$STDOUT_OUT" "skipping local@elsewhere" "skips a plugin whose marketplace is not declared"
 if cmp -s "$dir/settings.json" "$WORK/basic.orig"; then ok "restores settings.json byte for byte"; else bad "settings.json was left rewritten"; fi
+
+INSTALL_ARGS=--update run_install "$dir"
+assert_status 0 "succeeds with --update"
+assert_eq "$CALLS_OUT" "claude plugin marketplace add example/alpha
+claude plugin marketplace add example/beta
+claude plugin marketplace update
+claude plugin install one@alpha
+claude plugin update one@alpha
+claude plugin install two@beta
+claude plugin update two@beta" "--update refreshes the marketplaces and updates each plugin"
+assert_contains "$STDOUT_OUT" "skipping local@elsewhere" "--update still skips an undeclared marketplace"
+if cmp -s "$dir/settings.json" "$WORK/basic.orig"; then ok "restores settings.json after --update"; else bad "settings.json was left rewritten after --update"; fi
+
+INSTALL_ARGS=--bogus run_install "$dir"
+assert_status 2 "rejects an unknown argument"
 
 run_install "$dir" CLAUDE_FAIL_ON="plugin install one@alpha"
 assert_status 1 "fails when a plugin cannot be installed"

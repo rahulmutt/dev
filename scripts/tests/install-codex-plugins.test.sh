@@ -52,7 +52,7 @@ run_install() {
     : > "$calls"
     STATUS=0
     env -i PATH="$STUBS:/usr/bin:/bin" CALLS="$calls" CODEX_HOME="$home" "$@" \
-        bash "$INSTALL" >/dev/null 2>"$err" || STATUS=$?
+        bash "$INSTALL" ${INSTALL_ARGS:+"$INSTALL_ARGS"} >/dev/null 2>"$err" || STATUS=$?
     CALLS_OUT="$(cat "$calls")"
     STDERR_OUT="$(cat "$err")"
 }
@@ -94,6 +94,17 @@ assert_eq "$CALLS_OUT" "codex plugin marketplace add https://github.com/example/
 codex plugin marketplace add https://github.com/example/beta.git
 codex plugin add one@alpha
 codex plugin add two@beta" "adds every marketplace, then every enabled plugin"
+
+INSTALL_ARGS=--update run_install "$home"
+assert_status 0 "succeeds with --update"
+assert_eq "$CALLS_OUT" "codex plugin marketplace add https://github.com/example/alpha.git
+codex plugin marketplace add https://github.com/example/beta.git
+codex plugin marketplace upgrade
+codex plugin add one@alpha
+codex plugin add two@beta" "--update upgrades the marketplaces before re-adding the plugins"
+
+INSTALL_ARGS=--bogus run_install "$home"
+assert_status 2 "rejects an unknown argument"
 
 run_install "$home" CODEX_FAIL_ON="plugin add one@alpha"
 assert_status 1 "fails when a plugin cannot be installed"
