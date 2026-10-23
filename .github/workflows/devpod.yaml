@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # The Dockerfile's `mise install` keeps downloaded archives in BuildKit
       # cache mounts, which a fresh runner doesn't have. Restore them from the
@@ -50,7 +50,7 @@ jobs:
       # only the bumped tool downloads.
       - name: Restore BuildKit cache mounts
         id: mounts-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/buildkit-mounts
           key: buildkit-mounts-${{ matrix.arch }}-${{ hashFiles('.config/mise/config.toml') }}
@@ -83,7 +83,7 @@ jobs:
       # imported into the runner's docker. Each arch caches under its own scope;
       # base.yaml's push reads both, so it builds neither from scratch.
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./
           file: ./base/Dockerfile

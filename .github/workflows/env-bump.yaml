@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Checkout uses the default read-only GITHUB_TOKEN, not the PAT: it
           # only reads, and keeping the PAT out of this step means a dead PAT
@@ -62,7 +62,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v5
         with:
           # Only the mise CLI is wanted here. The action's default is to run
           # `mise install`, which would install the toolchain's *current* pins
