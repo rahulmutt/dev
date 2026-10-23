@@ -153,9 +153,12 @@ mise_path="$(command -v mise || true)"
   fail "/usr/local/bin/mise still exists"
 
 # Resolved, not run: it self-updates over the network and prompts.
-[ -x "$(command -v mise-update)" ] &&
-  pass "mise-update on PATH" ||
-  fail "mise-update not found on PATH"
+[ -x "$(command -v env-update)" ] &&
+  pass "env-update on PATH" ||
+  fail "env-update not found on PATH"
+[ -r /usr/local/share/dev/install.sh ] &&
+  pass "env-update's dotfiles installer present" ||
+  fail "/usr/local/share/dev/install.sh missing"
 
 # --- every tool runs ---
 for tool in $tools; do

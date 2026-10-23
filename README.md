@@ -69,7 +69,7 @@ step (baked into the image) only trusts and installs the workspace's own
   The settings also hide commit/PR attribution (including the newer
   `Claude-Session` trailer), turn off the feedback survey, Claude-drafted
   feedback, spinner tips and the self-updater (mise pins claude; update with
-  `mise-update claude`). `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is set too,
+  `env-update claude`). `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is set too,
   which also hides release notes and turns off telemetry, error reporting,
   feature flags, Remote Control, cloud sessions (`/code-review ultra`),
   artifact publishing, DesignSync and claude.ai-hosted plugins. Plugins from
@@ -191,11 +191,17 @@ A daily workflow (`.github/workflows/env-bump.yaml`, running
 the Codex plugin hooks, then opens or refreshes a single `env-bump` PR whose
 devpod checks prove the result still installs and validates.
 
-Inside a container, `mise-update [command…]` runs `mise self-update` and
-`mise upgrade --interactive --bump`, then execs the command if one is given
-(e.g. `mise-update claude`). A failed or cancelled update only warns. `--bump`
-rewrites the container's copy of the config, not this repo's, and
-`self-update` moves mise past the image's pinned version for that container.
+Inside a container, `env-update [command…]` runs `mise self-update`, syncs
+the dotfiles from the latest `main` (the one-line installer, which shows each
+change and asks before applying it), then `mise upgrade --interactive --bump`,
+and execs the command if one is given (e.g. `env-update claude`). The sync runs
+before the upgrade because it replaces `~/.config/mise/config.toml` with the
+repo's pins; the upgrade then bumps anything newer on top. A failed or
+cancelled step only warns. `--bump` rewrites the container's copy of the
+config, not this repo's, and `self-update` moves mise past the image's pinned
+version for that container. The sync doesn't install newly declared Claude or
+Codex plugins; run `scripts/install-claude-plugins.sh` or
+`scripts/install-codex-plugins.sh` from a checkout for that.
 
 ### pi plugins
 

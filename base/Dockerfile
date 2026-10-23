@@ -182,7 +182,8 @@ RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \
 # ---- container-creation hook and helper scripts ----
 # Last, so editing them rebuilds nothing else.
 COPY --chmod=0755 ./base/post-create.sh /usr/local/bin/post-create.sh
-COPY --chmod=0755 ./base/mise-update.sh /usr/local/bin/mise-update
+COPY --chmod=0755 ./base/env-update.sh /usr/local/bin/env-update
+COPY --chmod=0644 ./scripts/install.sh /usr/local/share/dev/install.sh
 
 WORKDIR /workspace
 
