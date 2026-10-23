@@ -13,12 +13,22 @@
 # `enabled = true`. Both commands are idempotent and leave config.toml as is,
 # so it is safe to re-run (e.g. after scripts/sync-dotfiles.sh).
 #
+# With --update, refreshes the marketplace snapshots (`codex plugin marketplace
+# upgrade`) between the two, so each plugin is re-added at its latest version.
+#
 # Usage:
-#   scripts/install-codex-plugins.sh
+#   scripts/install-codex-plugins.sh [--update]
 #
 # Reads $CODEX_HOME/config.toml (default: ~/.codex/config.toml).
 
 set -euo pipefail
+
+update=0
+case "${1:-}" in
+    --update) update=1 ;;
+    "") ;;
+    *) echo "install-codex-plugins: unknown argument: $1" >&2; exit 2 ;;
+esac
 
 config="${CODEX_HOME:-$HOME/.codex}/config.toml"
 
@@ -48,9 +58,16 @@ parse() {
     ' "$config"
 }
 
+lines="$(parse)"
+
 while read -r kind value; do
-    case "$kind" in
-        marketplace) codex plugin marketplace add "$value" ;;
-        plugin) codex plugin add "$value" ;;
-    esac
-done < <(parse)
+    if [ "$kind" = marketplace ]; then codex plugin marketplace add "$value"; fi
+done <<<"$lines"
+
+if [ "$update" -eq 1 ]; then
+    codex plugin marketplace upgrade
+fi
+
+while read -r kind value; do
+    if [ "$kind" = plugin ]; then codex plugin add "$value"; fi
+done <<<"$lines"

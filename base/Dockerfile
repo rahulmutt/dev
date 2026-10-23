@@ -166,13 +166,10 @@ RUN --mount=type=bind,source=scripts/install-codex-plugins.sh,target=/tmp/instal
 
 # ---- pi packages ----
 # Install the packages .pi/agent/settings.json declares now, so first launch
-# doesn't clone and npm-install them. `pi install` per source rather than
-# `pi update --extensions`, which skips pinned (@version) sources even when
-# they're missing; it leaves settings.json as is. Not best effort: a failed
-# package fails the build.
-RUN for src in $(jq -r '.packages[] | strings' "${HOME}/.pi/agent/settings.json"); do \
-      pi install "$src" || exit 1; \
-    done
+# doesn't clone and npm-install them. Not best effort: a failed package fails
+# the build.
+RUN --mount=type=bind,source=scripts/install-pi-packages.sh,target=/tmp/install-pi-packages.sh \
+    bash /tmp/install-pi-packages.sh
 
 # ---- tmux and nvim plugins ----
 # Best effort, as they were in post-create.sh.
@@ -183,8 +180,6 @@ RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \
 # Last, so editing them rebuilds nothing else.
 COPY --chmod=0755 ./base/post-create.sh /usr/local/bin/post-create.sh
 COPY --chmod=0755 ./base/env-update.sh /usr/local/bin/env-update
-# 0755, not 0644: --chmod also sets the mode of the directories COPY creates.
-COPY --chmod=0755 ./scripts/install.sh /usr/local/share/dev/install.sh
 
 WORKDIR /workspace
 
