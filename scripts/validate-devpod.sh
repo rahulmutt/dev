@@ -132,6 +132,9 @@ sudo -n true 2>/dev/null && pass "passwordless sudo" || fail "passwordless sudo 
 # created by its bootstrap, so both exist even if the plugin install failed.
 [ -d "$HOME/.tmux/plugins/tmux-sensible" ] && pass "tmux plugins installed" || fail "tmux plugin tmux-sensible missing"
 [ -d "$HOME/.local/share/nvim/lazy/LazyVim" ] && pass "nvim plugins installed" || fail "nvim plugin LazyVim missing"
+jq -e '.lspRecommendationDisabled == true' "$HOME/.claude.json" >/dev/null 2>&1 &&
+  pass "claude LSP recommendations off" ||
+  fail "~/.claude.json does not set lspRecommendationDisabled"
 
 missing="$(mise ls --missing 2>/dev/null || true)"
 [ -z "$missing" ] && pass "mise reports no missing tools" || fail "mise is missing tools: $missing"

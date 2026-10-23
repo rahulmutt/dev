@@ -146,6 +146,18 @@ COPY --chown=${USERNAME}:${USERNAME} ./.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} ./.pi/ /home/${USERNAME}/.pi/
 COPY --chown=${USERNAME}:${USERNAME} ./.tmux.conf /home/${USERNAME}/.tmux.conf
 
+# ---- claude plugins and global config ----
+# Install the plugins .claude/settings.json declares now; a fresh HOME has only
+# the built-in directory, so first launch would start with none (and a blank
+# claude-hud status line). Not best effort: a missing plugin fails the build.
+# lspRecommendationDisabled lives in the global config (~/.claude.json), not
+# settings.json, so it is merged in here; claude adds the rest on first launch.
+RUN --mount=type=bind,source=scripts/install-claude-plugins.sh,target=/tmp/install-claude-plugins.sh \
+    bash /tmp/install-claude-plugins.sh \
+ && f="${HOME}/.claude.json" \
+ && { [ -s "$f" ] || echo '{}' >"$f"; } \
+ && jq '.lspRecommendationDisabled = true' "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+
 # ---- codex plugins ----
 # Fetch the plugins .codex/config.toml declares; the TOML alone leaves codex
 # with no marketplace snapshot. Not best effort: a missing plugin fails the build.

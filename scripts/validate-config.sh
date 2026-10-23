@@ -25,11 +25,6 @@ CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 CODEX_CONFIG="${CODEX_HOME:-$HOME/.codex}/config.toml"
 PI_SETTINGS="$HOME/.pi/agent/settings.json"
 
-# A fresh HOME has only the built-in Anthropic Directory, so the official
-# marketplace must be added before its plugins will install.
-OFFICIAL_MARKETPLACE="claude-plugins-official"
-OFFICIAL_MARKETPLACE_REPO="anthropics/claude-plugins-official"
-
 # Marketplaces another tool wires up locally, not installable from GitHub:
 # nono's packs (always-further/nono-packs) set up always-further as a local
 # directory marketplace. Plugins from these are skipped by name.
@@ -118,7 +113,7 @@ check_claude_plugins() {
     mkdir -p "$home/.claude"
     cp "$CLAUDE_SETTINGS" "$home/.claude/settings.json"
 
-    for repo in "$OFFICIAL_MARKETPLACE_REPO" $(jq -r '.extraKnownMarketplaces // {} | .[] | .source | select(.source == "github") | .repo' "$CLAUDE_SETTINGS"); do
+    for repo in $(jq -r '.extraKnownMarketplaces // {} | .[] | .source | select(.source == "github") | .repo' "$CLAUDE_SETTINGS"); do
         if out="$(cd "$home" && HOME="$home" "$CLAUDE_BIN" plugin marketplace add "$repo" </dev/null 2>&1)"; then
             pass "claude marketplace $repo"
         else
@@ -127,7 +122,7 @@ check_claude_plugins() {
         fi
     done
 
-    declared="$(jq -r '.extraKnownMarketplaces // {} | keys[]' "$CLAUDE_SETTINGS"; echo "$OFFICIAL_MARKETPLACE")"
+    declared="$(jq -r '.extraKnownMarketplaces // {} | keys[]' "$CLAUDE_SETTINGS")"
     for id in $(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true) | .key' "$CLAUDE_SETTINGS"); do
         market="${id##*@}"
         if printf '%s\n' "${EXTERNAL_MARKETPLACES[@]}" | grep -qxF "$market"; then
@@ -143,6 +138,26 @@ check_claude_plugins() {
         else
             fail "claude plugin $id"
             printf '%s\n' "$out" | detail
+        fi
+    done
+}
+
+# Every enabled plugin is installed and enabled in the real ~/.claude, as
+# scripts/install-claude-plugins.sh leaves it at image build. Listed from a
+# scratch dir so no project settings are mixed in.
+check_claude_installed() {
+    local list id market
+    need "$CLAUDE_SETTINGS" || return
+    list="$(cd "$SCRATCH" && "$CLAUDE_BIN" plugin list --json </dev/null 2>/dev/null)" || list='[]'
+    for id in $(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true) | .key' "$CLAUDE_SETTINGS"); do
+        market="${id##*@}"
+        if printf '%s\n' "${EXTERNAL_MARKETPLACES[@]}" | grep -qxF "$market"; then
+            continue
+        fi
+        if jq -e --arg id "$id" 'any(.[]?; .id == $id and .enabled == true)' <<<"$list" >/dev/null 2>&1; then
+            pass "claude plugin $id installed"
+        else
+            fail "claude plugin $id not installed, enabled"
         fi
     done
 }
@@ -243,6 +258,7 @@ main() {
     echo "==> claude"
     check_claude_settings
     check_claude_plugins
+    check_claude_installed
     echo "==> codex"
     check_codex_config
     check_codex_plugins

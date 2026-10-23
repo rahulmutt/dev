@@ -43,7 +43,8 @@ mkdir -p "$STUBS"
 
 # claude: `doctor` reports invalid settings when the file under $HOME holds a
 # known-bad marker (unless STUB_DOCTOR_BLIND is set, simulating a wording
-# change); `plugin install` fails for $STUB_MISSING_PLUGIN.
+# change); `plugin install` fails for $STUB_MISSING_PLUGIN; `plugin list --json`
+# lists the fixture's plugins as installed, except $STUB_CLAUDE_PLUGIN_GONE.
 cat > "$STUBS/claude" <<'EOF'
 #!/bin/sh
 echo "claude $*" >> "$CALLS"
@@ -56,6 +57,11 @@ case "$1" in
     plugin)
         if [ "$2" = install ] && [ "$3" = "${STUB_MISSING_PLUGIN:-}" ]; then
             echo "Plugin not found"; exit 1
+        fi
+        if [ "$2" = list ]; then
+            for id in devkit@devkit-marketplace code-review@claude-plugins-official; do
+                [ "$id" = "${STUB_CLAUDE_PLUGIN_GONE:-}" ] || printf '{"id":"%s","enabled":true}\n' "$id"
+            done | jq -s .
         fi
         exit 0 ;;
 esac
@@ -104,6 +110,7 @@ make_home() {
     "off@devkit-marketplace": false
   },
   "extraKnownMarketplaces": {
+    "claude-plugins-official": {"source": {"source": "github", "repo": "anthropics/claude-plugins-official"}},
     "devkit-marketplace": {"source": {"source": "github", "repo": "rahulmutt/devkit"}}
   }
 }
@@ -251,6 +258,14 @@ echo "test: a plugin that fails to install fails"
 run_validate "$H" STUB_MISSING_PLUGIN=devkit@devkit-marketplace
 assert_status 1 "exits 1"
 assert_contains "$OUT" "FAIL  claude plugin devkit@devkit-marketplace" "names the plugin"
+
+echo
+echo "test: an enabled plugin missing from the real HOME fails"
+H="$WORK/clean"
+run_validate "$H" STUB_CLAUDE_PLUGIN_GONE=devkit@devkit-marketplace
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  claude plugin devkit@devkit-marketplace not installed" "names the missing plugin"
+assert_contains "$OUT" "ok    claude plugin code-review@claude-plugins-official installed" "still passes the installed one"
 
 echo
 echo "test: a plugin from an undeclared marketplace fails"
