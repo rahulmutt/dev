@@ -24,8 +24,8 @@ on:
     - cron: "17 6 * * *"
   workflow_dispatch:
 
-# GITHUB_TOKEN is used only to read the releases API (so the github: backend
-# avoids the unauthenticated rate limit); it does not write. The branch and PR
+# GITHUB_TOKEN is used only to read: the checkout, and the releases API (so the
+# github: backend avoids the unauthenticated rate limit); it does not write. The branch and PR
 # are opened with the MISE_BUMP_TOKEN PAT. Write scopes are unnecessary; omit them
 # to follow least privilege.
 permissions:
@@ -45,20 +45,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # A fine-grained PAT scoped to this repo, with contents:write and
-          # pull-requests:write. Fine-grained PATs expire (one year maximum);
-          # when it does, this workflow starts failing with a 403 rather than
-          # quietly doing nothing.
-          token: ${{ secrets.MISE_BUMP_TOKEN }}
-          # checkout defaults to persisting this token as an HTTP extraheader
+          # Checkout uses the default read-only GITHUB_TOKEN, not the PAT: it
+          # only reads, and keeping the PAT out of this step means a dead PAT
+          # fails at "Open pull request" -- where it is actually used -- instead
+          # of here as a misleading "could not read Username" fetch error.
+          #
+          # checkout defaults to persisting its token as an HTTP extraheader
           # in .git/config for the rest of the job. The very next step runs
           # `mise upgrade`, which downloads and executes arbitrary upstream
           # code as this same user (the npm: backend runs package lifecycle
           # scripts, and --minimum-release-age 0s deliberately skips any
           # quarantine window). A compromised upstream could read
-          # .git/config and exfiltrate a token with write access to this
-          # repo. peter-evans/create-pull-request authenticates with its own
-          # `token:` input, so the checkout credential is not needed at all.
+          # .git/config and exfiltrate the token. peter-evans/create-pull-request
+          # authenticates with its own `token:` input, so the checkout
+          # credential is not needed after this step.
           persist-credentials: false
 
       - name: Set up mise
@@ -84,6 +84,10 @@ jobs:
       - name: Open pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
+          # A fine-grained PAT scoped to this repo, with contents:write and
+          # pull-requests:write. Fine-grained PATs expire (one year maximum);
+          # when it does, this step fails with a 401/403 rather than the
+          # workflow quietly doing nothing.
           token: ${{ secrets.MISE_BUMP_TOKEN }}
           branch: env-bump
           delete-branch: true
