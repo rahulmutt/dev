@@ -183,7 +183,8 @@ RUN ( "${HOME}/.tmux/plugins/tpm/bin/install_plugins" || true ) \
 # Last, so editing them rebuilds nothing else.
 COPY --chmod=0755 ./base/post-create.sh /usr/local/bin/post-create.sh
 COPY --chmod=0755 ./base/env-update.sh /usr/local/bin/env-update
-COPY --chmod=0644 ./scripts/install.sh /usr/local/share/dev/install.sh
+# 0755, not 0644: --chmod also sets the mode of the directories COPY creates.
+COPY --chmod=0755 ./scripts/install.sh /usr/local/share/dev/install.sh
 
 WORKDIR /workspace
 
