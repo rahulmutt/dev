@@ -63,6 +63,15 @@ step (baked into the image) only trusts and installs the workspace's own
   `codeburn`, `skills`, `vsync`, and `nono`.
 - **Dotfiles:** preconfigured `.claude`, `.codex`, `.config`, `.pi`, and
   `.tmux.conf`.
+- **Claude plugins:** superpowers, ponytail, devkit, impeccable, claude-hud
+  (the status line), chrome-devtools-mcp and a few official ones, installed at
+  build time from `.claude/settings.json` by `scripts/install-claude-plugins.sh`.
+  The settings also hide commit/PR attribution (including the newer
+  `Claude-Session` trailer), turn off the feedback survey, Claude-drafted
+  feedback, spinner tips and the self-updater (mise pins claude; update with
+  `mise-update claude`). LSP plugin recommendations are off via
+  `lspRecommendationDisabled` in `~/.claude.json`, which the image sets — it is
+  global config, not a dotfile, so syncing the dotfiles doesn't carry it.
 - **Codex plugins:** superpowers, ponytail, devkit and impeccable, installed at build time
   from `.codex/config.toml`, with their hooks pre-trusted there (no `/hooks`
   step). When a plugin changes a hook, its pinned hash goes stale and codex
@@ -100,9 +109,11 @@ Show what would change, modify nothing:
 curl -fsSL https://raw.githubusercontent.com/rahulmutt/dev/main/scripts/install.sh | sh -s -- --dry-run
 ```
 
-Syncing `.codex/config.toml` only declares the Codex plugins. Fetch them with:
+Syncing `.claude/settings.json` and `.codex/config.toml` only declares the
+Claude and Codex plugins. Fetch them with:
 
 ```sh
+scripts/install-claude-plugins.sh
 scripts/install-codex-plugins.sh
 ```
 
