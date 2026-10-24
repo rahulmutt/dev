@@ -206,6 +206,26 @@ assert_contains "$OUT" '- changed `b@m:hooks.json:stop:0:0`' "changed hook"
 assert_contains "$OUT" '- added `c@m:hooks.json:stop:0:0`' "added hook"
 
 echo
+echo "test: --hooks-summary counts a trusted_content_hash change as a change"
+cat > "$WORK/content-before.toml" <<'EOF'
+[hooks.state."a@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:aaa"
+trusted_content_hash = "sha256:c1"
+
+[hooks.state."b@m:hooks.json:stop:0:0"]
+trusted_hash = "sha256:bbb"
+EOF
+sed 's/sha256:c1/sha256:c2/' "$WORK/content-before.toml" > "$WORK/content-after.toml"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/content-before.toml" "$WORK/content-after.toml")"
+# shellcheck disable=SC2016
+assert_contains "$OUT" '- changed `a@m:hooks.json:stop:0:0`' "content-only change listed"
+assert_not_contains "$OUT" 'b@m' "unchanged hook not listed"
+OUT="$(bash "$BUMP" --hooks-summary "$WORK/content-before.toml" "$WORK/content-before.toml")"
+if [ -z "$OUT" ]; then ok "identical content hashes summarize to nothing"; else bad "identical content hashes summarize to nothing (got: $OUT)"; fi
+OUT="$(bash "$BUMP" --rewrite-hooks "$WORK/codex-before.toml" "$WORK/content-after.toml")"
+assert_contains "$OUT" 'trusted_content_hash = "sha256:c2"' "--rewrite-hooks keeps trusted_content_hash"
+
+echo
 echo "test: --hooks-summary with no hooks before lists every hook as added"
 OUT="$(bash "$BUMP" --hooks-summary "$WORK/before.toml" "$WORK/rewritten.toml")"
 # shellcheck disable=SC2016

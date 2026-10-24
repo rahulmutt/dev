@@ -114,23 +114,27 @@ rewrite_hooks() {
     fi
 }
 
-# Emit "<hook key><TAB><trusted hash>" for every [hooks.state] table.
+# Emit "<hook key><TAB><trusted hash>" for every [hooks.state] table, the
+# hash being trusted_hash and, if set, "/" and trusted_content_hash -- so a
+# change to either shows as a change.
 hook_pins() {
     awk '
+        function flush() {
+            if (key != "" && hash != "") print key "\t" hash (content != "" ? "/" content : "")
+            key = ""; hash = ""; content = ""
+        }
+        function value(line) { sub(/^[^"]*"/, "", line); sub(/".*$/, "", line); return line }
         /^\[hooks\.state\."/ {
+            flush()
             key = $0
             sub(/^\[hooks\.state\."/, "", key)
             sub(/"\][[:space:]]*$/, "", key)
             next
         }
-        /^\[/ { key = "" }
-        key != "" && /^trusted_hash[[:space:]]*=/ {
-            hash = $0
-            sub(/^[^"]*"/, "", hash)
-            sub(/".*$/, "", hash)
-            print key "\t" hash
-            key = ""
-        }
+        /^\[/ { flush() }
+        key != "" && /^trusted_hash[[:space:]]*=/ { hash = value($0) }
+        key != "" && /^trusted_content_hash[[:space:]]*=/ { content = value($0) }
+        END { flush() }
     ' "$1"
 }
 
