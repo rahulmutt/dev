@@ -217,6 +217,7 @@ trusted_hash = "sha256:bbb"
 EOF
 sed 's/sha256:c1/sha256:c2/' "$WORK/content-before.toml" > "$WORK/content-after.toml"
 OUT="$(bash "$BUMP" --hooks-summary "$WORK/content-before.toml" "$WORK/content-after.toml")"
+# shellcheck disable=SC2016
 assert_contains "$OUT" '- changed `a@m:hooks.json:stop:0:0`' "content-only change listed"
 assert_not_contains "$OUT" 'b@m' "unchanged hook not listed"
 OUT="$(bash "$BUMP" --hooks-summary "$WORK/content-before.toml" "$WORK/content-before.toml")"
