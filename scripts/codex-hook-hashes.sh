@@ -6,11 +6,17 @@
 #
 #   [hooks.state."<plugin>:<hooks file>:<event>:<i>:<j>"]
 #   trusted_hash = "sha256:..."
+#   trusted_content_hash = "sha256:..."
 #
-# The hash covers the hook's entry in the plugin's hooks file (not the script it
-# runs), so it is the same on every machine and can be pinned in the dotfile.
-# When a plugin changes a hook's definition the pinned hash goes stale: codex
-# reports the hook as "modified" and stops running it until it is re-trusted.
+# trusted_hash covers the hook's entry in the plugin's hooks file. Since codex
+# 0.164, trusted_content_hash also covers the plugin's files (the scripts the
+# hook runs): hooks/list reports both as one "<hook>/<content>" currentHash,
+# which is split here, as codex rejects the joined form in trusted_hash. Older
+# codex reports only the first and ignores the second key. Both hashes are the
+# same on every machine -- install-codex-plugins.sh drops the .git a plugin at
+# its marketplace root would otherwise carry -- so they can be pinned in the
+# dotfile. When a plugin changes, the pinned hashes go stale: codex reports the
+# hook as "modified" and stops running it until it is re-trusted.
 #
 # Usage:
 #   scripts/codex-hook-hashes.sh          # print the [hooks.state] block to paste into .codex/config.toml
@@ -59,7 +65,10 @@ fi
 hooks="$(jq -c '[.result.data[].hooks[] | select(.isManaged | not)] | unique_by(.key)' <<<"$reply")"
 
 if [ "$mode" = print ]; then
-    jq -r 'map("[hooks.state.\"\(.key)\"]\ntrusted_hash = \"\(.currentHash)\"") | join("\n\n")' <<<"$hooks"
+    jq -r 'map((.currentHash | split("/")) as [$hook, $content]
+        | "[hooks.state.\"\(.key)\"]\ntrusted_hash = \"\($hook)\""
+          + if $content then "\ntrusted_content_hash = \"\($content)\"" else "" end)
+        | join("\n\n")' <<<"$hooks"
     exit
 fi
 

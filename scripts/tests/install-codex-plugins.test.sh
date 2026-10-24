@@ -95,6 +95,14 @@ codex plugin marketplace add https://github.com/example/beta.git
 codex plugin add one@alpha
 codex plugin add two@beta" "adds every marketplace, then every enabled plugin"
 
+mkdir -p "$home/plugins/cache/alpha/one/1.0.0/.git" "$home/plugins/cache/alpha/one/1.0.0/hooks"
+run_install "$home"
+if [ ! -e "$home/plugins/cache/alpha/one/1.0.0/.git" ] && [ -d "$home/plugins/cache/alpha/one/1.0.0/hooks" ]; then
+    ok "drops .git from installed plugins, keeping their files"
+else
+    bad "drops .git from installed plugins, keeping their files"
+fi
+
 INSTALL_ARGS=--update run_install "$home"
 assert_status 0 "succeeds with --update"
 assert_eq "$CALLS_OUT" "codex plugin marketplace add https://github.com/example/alpha.git

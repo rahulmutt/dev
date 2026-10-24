@@ -71,3 +71,9 @@ fi
 while read -r kind value; do
     if [ "$kind" = plugin ]; then codex plugin add "$value"; fi
 done <<<"$lines"
+
+# A plugin at its marketplace's root (ponytail, devkit) is cached with the
+# clone's .git, whose index and logs differ on every clone. codex >= 0.164
+# fingerprints the plugin's files for hook trust (trusted_content_hash), so
+# with .git in there no pinned hash could ever match. codex doesn't read it.
+rm -rf "${CODEX_HOME:-$HOME/.codex}"/plugins/cache/*/*/*/.git

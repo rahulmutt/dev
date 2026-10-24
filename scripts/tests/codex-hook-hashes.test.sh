@@ -87,6 +87,14 @@ cat > "$WORK/trusted.json" <<EOF
 ]}]}}
 EOF
 
+# codex >= 0.164 reports "<hook hash>/<content hash>".
+cat > "$WORK/content.json" <<EOF
+{"result":{"data":[{"cwd":"/w","errors":[],"warnings":[],"hooks":[
+  $(hook "alpha@m:hooks.json:session_start:0:0" "sha256:aa/sha256:c1" modified),
+  $(hook "beta@m:hooks.json:post_tool_use:0:0" "sha256:bb" trusted)
+]}]}}
+EOF
+
 echo '{"error":{"code":-32600,"message":"boom"}}' > "$WORK/error.json"
 
 # --- tests ------------------------------------------------------------------
@@ -102,6 +110,15 @@ trusted_hash = "sha256:bb"
 
 [hooks.state."zeta@m:hooks.json:stop:0:0"]
 trusted_hash = "sha256:zz"' "one entry per hook, sorted by key, managed hooks skipped"
+
+run_hashes "$WORK/content.json"
+assert_status 0 "prints the trust block for codex >= 0.164"
+assert_eq "$OUT" '[hooks.state."alpha@m:hooks.json:session_start:0:0"]
+trusted_hash = "sha256:aa"
+trusted_content_hash = "sha256:c1"
+
+[hooks.state."beta@m:hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:bb"' "splits a two-part hash into trusted_hash and trusted_content_hash"
 
 run_hashes "$WORK/mixed.json" --check
 assert_status 1 "--check fails when a hook is not trusted"
