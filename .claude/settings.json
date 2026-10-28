@@ -8,7 +8,7 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "model": "opus[1m]",
+  "model": "fable",
   "autoCompactWindow": 400000,
   "worktree": {
     "baseRef": "head"
