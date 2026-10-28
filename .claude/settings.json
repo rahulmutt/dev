@@ -1,4 +1,10 @@
 {
+  "cleanupPeriodDays": 36500,
+  "env": {
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
   "attribution": {
     "commit": "",
     "pr": "",
@@ -9,7 +15,6 @@
     "defaultMode": "bypassPermissions"
   },
   "model": "fable",
-  "autoCompactWindow": 400000,
   "worktree": {
     "baseRef": "head"
   },
@@ -62,17 +67,12 @@
       }
     }
   },
-  "tui": "fullscreen",
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "dark",
-  "showTurnDuration": true,
-  "env": {
-    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
-    "DISABLE_AUTOUPDATER": "1",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
-  },
   "feedbackSurveyRate": 0,
   "feedbackDrafts": "off",
   "spinnerTipsEnabled": false,
-  "cleanupPeriodDays": 36500
+  "autoCompactWindow": 400000,
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "showTurnDuration": true
 }

@@ -286,6 +286,8 @@ baked-in Claude, Codex and pi dotfiles against the installed tools: each
 tool accepts its settings (`claude doctor`, `codex doctor`), every declared
 plugin and package resolves, Codex hook trust is current, and no settings
 file names a versioned mise install path (use `installs/<tool>/latest/`).
+`.claude/settings.json` must also be stored exactly as Claude writes it (key
+order, migrated values), or every env-update would show it as changed.
 
 CI runs the same script as a reusable workflow (`.github/workflows/devpod.yaml`),
 once per architecture (`amd64`, `arm64`): on pull requests, and on
