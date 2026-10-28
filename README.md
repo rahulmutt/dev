@@ -82,6 +82,9 @@ step (baked into the image) only trusts and installs the workspace's own
   context, so a long session at 900k costs more than twice as much per turn as
   one at 400k against the plan limits. Change it per session with
   `/autocompact`; values under 100000 are ignored.
+  `cleanupPeriodDays` is 36500 (100 years), so transcripts in
+  `~/.claude/projects/` are effectively never deleted; Claude has no "never"
+  value, and its default is 30 days.
 - **Claude status line:** claude-hud, via `.claude/statusline.sh`, showing
   context use, prompt-cache hit rate and expiry, and the 5-hour, weekly and
   per-model weekly (e.g. Fable) plan limits. Claude only passes the status line

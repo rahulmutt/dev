@@ -73,5 +73,6 @@
   },
   "feedbackSurveyRate": 0,
   "feedbackDrafts": "off",
-  "spinnerTipsEnabled": false
+  "spinnerTipsEnabled": false,
+  "cleanupPeriodDays": 36500
 }
