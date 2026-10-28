@@ -103,6 +103,21 @@ check_claude_settings() {
     fi
 }
 
+# claude ignores an autoCompactWindow outside 100000-1000000 without a word
+# (claude doctor accepts it too), falling back to the model's full window.
+check_claude_autocompact() {
+    local v
+    need "$CLAUDE_SETTINGS" || return
+    v="$(jq -r '.autoCompactWindow // empty' "$CLAUDE_SETTINGS")"
+    if [ -z "$v" ] || [ "$v" = auto ]; then
+        pass "claude autoCompactWindow ${v:-unset}"
+    elif [[ "$v" =~ ^[0-9]+$ ]] && [ "$v" -ge 100000 ] && [ "$v" -le 1000000 ]; then
+        pass "claude autoCompactWindow $v"
+    else
+        fail "claude autoCompactWindow $v is outside 100000-1000000; claude ignores it"
+    fi
+}
+
 # Every enabled plugin installs, in a scratch HOME holding a copy of the
 # settings, so the real ~/.claude is never touched.
 check_claude_plugins() {
@@ -257,6 +272,7 @@ main() {
     check_pinned_paths
     echo "==> claude"
     check_claude_settings
+    check_claude_autocompact
     check_claude_plugins
     check_claude_installed
     echo "==> codex"

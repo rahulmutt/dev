@@ -76,6 +76,12 @@ step (baked into the image) only trusts and installs the workspace's own
   GitHub marketplaces, which is all of the above, still install and update. LSP plugin recommendations are off via
   `lspRecommendationDisabled` in `~/.claude.json`, which the image sets — it is
   global config, not a dotfile, so syncing the dotfiles doesn't carry it.
+  `autoCompactWindow` is 400000: on the 1M-context model, auto-compaction then
+  runs at about 367k tokens (the window minus Claude's 33k buffer) instead of
+  near 1M. Every turn re-sends the whole context, so a long session at 900k
+  costs more than twice as much per turn as one at 400k against the plan
+  limits. Change it per session with `/autocompact`; values under 100000 are
+  ignored.
 - **Claude status line:** claude-hud, via `.claude/statusline.sh`, showing
   context use, prompt-cache hit rate and expiry, and the 5-hour, weekly and
   per-model weekly (e.g. Fable) plan limits. Claude only passes the status line
