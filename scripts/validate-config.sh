@@ -118,6 +118,38 @@ check_claude_autocompact() {
     fi
 }
 
+# claude rewrites settings.json whenever it saves a setting: its own key
+# order, and some migrated values (model "opus" becomes "opus[1m]"). A file
+# stored any other way shows up as a diff in every env-update sync. Disabling
+# and re-enabling a plugin makes claude save without a real change, and needs
+# no login.
+check_claude_normalized() {
+    local home plugin out
+    need "$CLAUDE_SETTINGS" || return
+    plugin="$(jq -r '.enabledPlugins // {} | to_entries | map(select(.value == true)) | .[0].key // empty' "$CLAUDE_SETTINGS")"
+    if [ -z "$plugin" ]; then
+        skip "claude normalized: no enabled plugin to round-trip"
+        return
+    fi
+
+    home="$SCRATCH/claude-order"
+    mkdir -p "$home/.claude"
+    cp "$CLAUDE_SETTINGS" "$home/.claude/settings.json"
+    if ! out="$(cd "$home" && HOME="$home" "$CLAUDE_BIN" plugin disable "$plugin" </dev/null 2>&1 &&
+        HOME="$home" "$CLAUDE_BIN" plugin enable "$plugin" </dev/null 2>&1)"; then
+        fail "claude normalized: could not round-trip $plugin"
+        printf '%s\n' "$out" | detail
+    elif cmp -s "$CLAUDE_SETTINGS" "$home/.claude/settings.json"; then
+        pass "claude settings.json is stored as claude writes it"
+    elif jq -S . "$CLAUDE_SETTINGS" | cmp -s - <(jq -S . "$home/.claude/settings.json"); then
+        fail "claude reorders settings.json; store it in the order below"
+        jq -r 'keys_unsorted | join(" ")' "$home/.claude/settings.json" | detail
+    else
+        fail "claude rewrites values in settings.json; store what it writes"
+        diff "$CLAUDE_SETTINGS" "$home/.claude/settings.json" | detail
+    fi
+}
+
 # Every enabled plugin installs, in a scratch HOME holding a copy of the
 # settings, so the real ~/.claude is never touched.
 check_claude_plugins() {
@@ -273,6 +305,7 @@ main() {
     echo "==> claude"
     check_claude_settings
     check_claude_autocompact
+    check_claude_normalized
     check_claude_plugins
     check_claude_installed
     echo "==> codex"
