@@ -268,6 +268,19 @@ assert_contains "$OUT" "FAIL  claude plugin devkit@devkit-marketplace not instal
 assert_contains "$OUT" "ok    claude plugin code-review@claude-plugins-official installed" "still passes the installed one"
 
 echo
+echo "test: an out-of-range autoCompactWindow fails"
+H="$WORK/autocompact"; make_home "$H"
+for v in 400000 '"auto"'; do
+    jq --argjson v "$v" '.autoCompactWindow = $v' "$H/.claude/settings.json" > "$WORK/s.json" && mv "$WORK/s.json" "$H/.claude/settings.json"
+    run_validate "$H"
+    assert_contains "$OUT" "ok    claude autoCompactWindow" "accepts $v"
+done
+jq '.autoCompactWindow = 40000' "$H/.claude/settings.json" > "$WORK/s.json" && mv "$WORK/s.json" "$H/.claude/settings.json"
+run_validate "$H"
+assert_status 1 "exits 1"
+assert_contains "$OUT" "FAIL  claude autoCompactWindow 40000 is outside" "names the bad value"
+
+echo
 echo "test: a plugin from an undeclared marketplace fails"
 H="$WORK/undeclared"; make_home "$H"
 jq '.enabledPlugins["x@nowhere"] = true' "$H/.claude/settings.json" > "$WORK/s.json" && mv "$WORK/s.json" "$H/.claude/settings.json"
