@@ -66,6 +66,9 @@ step (baked into the image) only trusts and installs the workspace's own
 - **Claude plugins:** superpowers, ponytail, devkit, impeccable, claude-hud
   (the status line), chrome-devtools-mcp and a few official ones, installed at
   build time from `.claude/settings.json` by `scripts/install-claude-plugins.sh`.
+  Ponytail starts off (`.config/ponytail/config.json`); turn it on per session
+  with `/ponytail`. Its band above the prompt is hidden (`.claude/.ponytail-band`);
+  `/ponytail band` shows it.
   The settings also hide commit/PR attribution (including the newer
   `Claude-Session` trailer), turn off the feedback survey, Claude-drafted
   feedback, spinner tips and the self-updater (mise pins claude; update with
