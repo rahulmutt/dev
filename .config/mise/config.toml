@@ -12,8 +12,8 @@ tmux = "3.7c"
 tree-sitter = "0.27.1"
 gh = "2.103.3"
 codex = "0.166.0"
-claude = "2.1.314"
-opencode = { version = "2.2.3", allow_builds = ["@opencode/cli"] }
+claude = "2.1.316"
+opencode = { version = "2.2.5", allow_builds = ["@opencode/cli"] }
 glow = "3.0.0"
 dprint = "0.64.3"
 btop = "1.4.8"
