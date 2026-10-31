@@ -46,15 +46,15 @@ trusted_content_hash = "sha256:9d05ce408ae21e429e88ba0a56358ce979e55bc2afc69f784
 
 [hooks.state."impeccable@impeccable:hooks/hooks.json:post_tool_use:0:0"]
 trusted_hash = "sha256:7c21510c97aef3035a77f380e84d716fbe7a25a289be3c57463eb5e2b1f4da69"
-trusted_content_hash = "sha256:e3e0f1c9a35634fa0062fda0dc28ff157185eac7ffa7e1fbd1c66faf2c3a700c"
+trusted_content_hash = "sha256:dd52783bf4567a43cdfc562e0bc49f168f2494477d893f15bd7e63f3c8b1ce4a"
 
 [hooks.state."impeccable@impeccable:hooks/hooks.json:session_start:0:0"]
 trusted_hash = "sha256:47ed9a201ee361838e67c9a943430eee1f1c2694b9b239ce7a4b8eb3c0876c21"
-trusted_content_hash = "sha256:e3e0f1c9a35634fa0062fda0dc28ff157185eac7ffa7e1fbd1c66faf2c3a700c"
+trusted_content_hash = "sha256:dd52783bf4567a43cdfc562e0bc49f168f2494477d893f15bd7e63f3c8b1ce4a"
 
 [hooks.state."impeccable@impeccable:hooks/hooks.json:stop:0:0"]
 trusted_hash = "sha256:5e32e42c9a09a82fa89fe0a2bdd7d391207d01b8159a57080f8df5fdc5ee93bf"
-trusted_content_hash = "sha256:e3e0f1c9a35634fa0062fda0dc28ff157185eac7ffa7e1fbd1c66faf2c3a700c"
+trusted_content_hash = "sha256:dd52783bf4567a43cdfc562e0bc49f168f2494477d893f15bd7e63f3c8b1ce4a"
 
 [hooks.state."ponytail@ponytail:hooks/claude-codex-hooks.json:session_start:0:0"]
 trusted_hash = "sha256:defea43402fc8edba23234c694a1117cf80efc2da38968a40a1004cd9d63f725"
