@@ -11,6 +11,7 @@ bun = "1.4.4"
 tmux = "3.8"
 tree-sitter = "0.27.2"
 gh = "2.104.0"
+pi = "1.5.2"
 codex = "0.169.0"
 claude = "2.1.323"
 opencode = { version = "2.3.0", allow_builds = ["@opencode/cli"] }
@@ -20,10 +21,7 @@ btop = "1.4.8"
 bat = "0.26.1"
 ttyd = "1.7.7"
 ast-grep = "0.51.2"
-
-"npm:@earendil-works/pi-coding-agent" = "1.5.2"
-"github:rahulmutt/vsync" = "0.6.1"
-"github:always-further/nono" = "0.81.0"
+nono = "0.81.0"
 
 [settings]
 # Install Python only from precompiled (python-build-standalone) builds. The
