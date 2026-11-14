@@ -13,7 +13,7 @@ tree-sitter = "0.27.2"
 gh = "2.104.0"
 pi = "1.5.2"
 codex = "0.169.0"
-claude = "2.1.323"
+claude = "2.1.325"
 opencode = { version = "2.3.0", allow_builds = ["@opencode/cli"] }
 glow = "3.0.0"
 dprint = "0.64.3"
