@@ -21,7 +21,7 @@ btop = "1.4.8"
 bat = "0.26.1"
 ttyd = "1.7.7"
 ast-grep = "0.51.2"
-nono = "0.81.0"
+nono = "0.82.0"
 
 [settings]
 # Install Python only from precompiled (python-build-standalone) builds. The
