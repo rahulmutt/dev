@@ -39,7 +39,7 @@ tools=(
   mise rg fd fzf jq bat glow btop lazygit gh tmux tree-sitter nvim
   node bun python dprint ttyd ast-grep
   # AI coding agents
-  claude codex opencode pi codeburn skills vsync nono
+  claude codex opencode pi nono
 )
 
 cleanup() {
