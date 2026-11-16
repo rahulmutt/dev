@@ -20,7 +20,7 @@ dprint = "0.64.3"
 btop = "1.4.8"
 bat = "0.26.1"
 ttyd = "1.7.7"
-ast-grep = "0.51.2"
+ast-grep = "0.51.3"
 nono = "0.82.0"
 
 [settings]
