@@ -1,5 +1,5 @@
 [tools]
-ripgrep = "15.2.0"
+ripgrep = "16.0.0"
 python = "3.15.2"
 neovim = "0.12.6"
 lazygit = "0.66.3"
@@ -13,8 +13,8 @@ tree-sitter = "0.27.2"
 gh = "2.105.0"
 pi = "1.6.0"
 codex = "0.171.0"
-claude = "2.1.330"
-opencode = { version = "2.3.2", allow_builds = ["@opencode/cli"] }
+claude = "2.1.331"
+opencode = { version = "2.4.1", allow_builds = ["@opencode/cli"] }
 glow = "3.0.0"
 dprint = "0.65.0"
 btop = "1.4.8"
